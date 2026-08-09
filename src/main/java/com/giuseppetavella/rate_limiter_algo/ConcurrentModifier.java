@@ -35,7 +35,10 @@ public class ConcurrentModifier {
             var thread = new Thread(() -> {
                 // The thread that is running this task
                 // must truly be the thread that was promised to run it
-                assert Thread.currentThread().threadId() == taskInfo.getThreadIdToBe();
+                if(Thread.currentThread().threadId() != taskInfo.getThreadIdToBe()) {
+                    throw new RuntimeException("The thread that was promised to run this task "
+                                              +"is not the thread that actually run it.");
+                };
                 taskInfo.getTask().run();  
             });
             
