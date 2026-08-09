@@ -14,7 +14,7 @@ public class Timeline {
     }
     
     public boolean canAdd(int nEvents) {
-        return countInWindow + nEvents <= maxEvents;
+        return countInWindow.get() + nEvents <= maxEvents;
     }
     
     public boolean canAdd() {
@@ -22,11 +22,6 @@ public class Timeline {
     }
     
     public Timeline add() {
-        // var currCount = countInWindow.get();
-        // while(this.countInWindow.compareAndSet(currCount, currCount+1)) {
-        //    
-        // }
-        
         if(!canAdd()) {
             throw new TooManyEventsInWindowException(maxEvents);
         }
@@ -35,8 +30,12 @@ public class Timeline {
     }
     
     public void resetCountInWindow() {
-        // Lock-free thread safety
+        // var currCount = countInWindow.get(); 
+        // var overflow = currCount > maxEvents; 
         this.countInWindow.set(0);
+        // if(overflow) {
+        //     throw new TooManyEventsInWindowException(maxEvents, currCount);
+        // }
     }
 
     public long getCountInWindow() {

@@ -1,5 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
+import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -144,10 +146,16 @@ public class TimelineManager {
      */
     private Runnable buildScheduledTask(int timelineIdx) {
         return () -> {
-            var timeline = timelines.get(timelineIdx);
-            System.out.println("[timeline %d] resetting count in window... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
-            // Get the timeline associated to this thread
-            timeline.resetCountInWindow();
+            // try {
+                var timeline = timelines.get(timelineIdx);
+                System.out.println("[timeline %d] resetting count in window... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
+                // Get the timeline associated to this thread
+                timeline.resetCountInWindow();
+                
+            // } catch (TooManyEventsInWindowException e) {
+            //     // System.out.println(e.getMessage());
+            //     // throw new RuntimeException(e);
+            // }
         };
     }
     
@@ -160,18 +168,18 @@ public class TimelineManager {
         return this;
     }
     
-    public boolean canAdd(int nEvents) {
-        // Check if all timelines can add event
-        for (var timeline : timelines) {
-            if(!timeline.canAdd(nEvents)) {
-                return false;
-            }
-        }
-        return true;
-    }
+    // public boolean canAdd(int nEvents) {
+    //     // Check if all timelines can add event
+    //     for (var timeline : timelines) {
+    //         if(!timeline.canAdd(nEvents)) {
+    //             return false;
+    //         }
+    //     }
+    //     return true;
+    // }
     
-    public boolean canAdd() {
-        return canAdd(1);
-    }
+    // public boolean canAdd() {
+    //     return canAdd(1);
+    // }
     
 }

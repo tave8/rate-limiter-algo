@@ -11,6 +11,23 @@ public class ConcurrentModifier {
         this.tasks = new ArrayList<>();
     }
 
+
+    /**
+     * Run a task with the given number of concurrent threads.
+     * 
+     * @param nThreads
+     * @param task
+     * @return
+     */
+    public ConcurrentModifier concurrently(int nThreads, 
+                                           Runnable task) 
+    {
+        for (int i = 0; i < nThreads; i++) {
+            this.tasks.add(new TaskInfo(task));
+        }
+        return this;
+    }
+
     /**
      * Each task will be run a different thread.
      * The threads will run concurrently.
@@ -48,12 +65,16 @@ public class ConcurrentModifier {
     public ConcurrentModifier concurrently(Runnable task) {
         return concurrently(task, null);
     }
-    
+
+    /**
+     * Use raw threads to run the tasks registered at this object.
+     */
     public void useRawThreads() {
         
         List<Thread> threads = new ArrayList<>();
         
         // For each task, a thread is created
+        // Each task could in turn contain more tasks, but this is abstracted away
         for (var taskInfo : tasks) {
             var thread = new Thread(() -> {
                 // The thread that is running this task
@@ -82,6 +103,8 @@ public class ConcurrentModifier {
                 throw new RuntimeException(e);
             }
         }
+        
+        this.tasks.clear();
 
     }
     
