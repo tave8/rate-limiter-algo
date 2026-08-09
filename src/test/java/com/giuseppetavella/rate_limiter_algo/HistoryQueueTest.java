@@ -1,6 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
 
+import com.giuseppetavella.rate_limiter_algo.history_queue.HistoryQueue;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

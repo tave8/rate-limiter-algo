@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo;
+package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 public class ChronologyInvariantViolatedException extends RuntimeException {
     public ChronologyInvariantViolatedException() {

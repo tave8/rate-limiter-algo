@@ -1,5 +1,8 @@
-package com.giuseppetavella.rate_limiter_algo;
+package com.giuseppetavella.rate_limiter_algo.history_queue;
 
+
+import com.giuseppetavella.rate_limiter_algo.TimeUtil;
+import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 
 import java.util.LinkedList;
 import java.util.concurrent.Executors;

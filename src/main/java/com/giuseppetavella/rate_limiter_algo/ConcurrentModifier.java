@@ -10,18 +10,41 @@ public class ConcurrentModifier {
     public ConcurrentModifier() {
         this.tasks = new ArrayList<>();
     }
-    
+
+    /**
+     * Each task will be run a different thread.
+     * The threads will run concurrently.
+     * 
+     * @param task
+     * @param threadNameToBe
+     * @return
+     */
     public ConcurrentModifier concurrently(Runnable task, 
                                            String threadNameToBe) {
         tasks.add(new TaskInfo(task, threadNameToBe));
         return this;
     }
 
+    /**
+     * Each task will be run a different thread.
+     * The threads will run concurrently.
+     *
+     * @param task
+     * @param threadNameToBe
+     * @return
+     */
     public ConcurrentModifier concurrently(Runnable task,
                                            int threadNameToBe) {
         return concurrently(task, threadNameToBe+"");
     }
 
+    /**
+     * Each task will be run a different thread.
+     * The threads will run concurrently.
+     *
+     * @param task
+     * @return
+     */
     public ConcurrentModifier concurrently(Runnable task) {
         return concurrently(task, null);
     }
