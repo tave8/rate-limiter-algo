@@ -12,7 +12,6 @@ public class Timeline {
     private final TimelineManager manager;
     private volatile long windowStart;
     private final TimeUtil util;
-    private final double percThreshold;
     
     public Timeline(int maxEvents, TimelineManager manager) {
         this.util = new TimeUtil(); // Must go first - avoid partial initialization
@@ -20,9 +19,12 @@ public class Timeline {
         this.manager = manager;
         this.countInWindow = new AtomicLong(0);
         this.windowStart = getNow();
-        this.percThreshold = 0.95;
     }
-
+    
+    private boolean hasSpaceForEvents(int nEvents) {
+        return countInWindow.get() + nEvents <= maxEvents; // No overflow 
+    }
+    
     /**
      * Can add a new event?
      * 
@@ -30,8 +32,19 @@ public class Timeline {
      * @return
      */
     public boolean canAdd(int nEvents) {
-        return countInWindow.get() + nEvents <= maxEvents; // No overflow
+        if(!hasSpaceForEvents(nEvents)) {
+            return false;
+        }
+        
+        if(manager.getBurstProtection().isEnabled()) {
+            if(hasReachedWindowThreshold()) {
+                return !hasReachedEventThreshold();
+            }
+        }
+        
+        return true;
     }
+    
 
     /**
      * Is this the last time buffer in the window?
@@ -59,13 +72,29 @@ public class Timeline {
      * 
      * @return
      */
-    public boolean isThisLastBuffer() {
-        var startLastBuffer = windowStart + manager.calcLastBuffer();
-        return getNow() >= startLastBuffer;
+    // public boolean isThisLastBuffer() {
+    //     var startLastBuffer = windowStart + manager.calcLastBuffer();
+    //     return getNow() >= startLastBuffer;
+    // }
+
+
+    /**
+     * Shortcut. 
+     * 
+     * @return
+     */
+    private boolean hasReachedEventThreshold() {
+       return manager.getBurstProtection().hasReachedEventThreshold(countInWindow.get()); 
     }
-    
-    public boolean canAdd() {
-        return canAdd(1);
+
+
+    /**
+     * Shortcut.
+     * 
+     * @return
+     */
+    private boolean hasReachedWindowThreshold() {
+        return manager.getBurstProtection().hasReachedWindowThreshold(getNow(), windowStart);
     }
 
     /**
@@ -74,14 +103,12 @@ public class Timeline {
      * @return
      */
     public Timeline add() {
-        if(!canAdd()) {
+        if(!hasSpaceForEvents(1)) {
             throw new TooManyEventsInWindowException(maxEvents);
         }
-
-        // System.out.println(isThisLastBuffer());
-        if(isThisLastBuffer()) {
-            if(hasReachedPercThreshold()) {
-                // System.out.println("curr events / max events: %f perc".formatted(currPerc));
+        
+        if(manager.getBurstProtection().isEnabled()) {
+            if(hasReachedWindowThreshold() && hasReachedEventThreshold()) {
                 throw new EventsAddedTooFastException(maxEvents, countInWindow.get());
             }
         }
@@ -111,32 +138,24 @@ public class Timeline {
      *
      * @return
      */
-    public boolean hasReachedPercThreshold() {
-        // The percentage of events added compared to the max events
-        double currPerc = (double) countInWindow.get() / (double) maxEvents;
-        // System.out.println("curr perc reached: " + currPerc);
-        // The percentage of current events is greater than a set percentage threshold
-        return currPerc >= percThreshold;
-    }
+    // public boolean hasReachedPercThreshold() {
+    //     // The percentage of events added compared to the max events
+    //     double currPerc = (double) countInWindow.get() / (double) maxEvents;
+    //     // The percentage of current events is greater than a set percentage threshold
+    //     return currPerc >= percThreshold;
+    // }
 
     /**
      * Refresh the current period.
      */
     public void refresh() {
         resetCountInWindow();
-        // var prev = windowStart;
         this.windowStart = getNow();
-        // System.out.println("delta start period: " + (windowStart - prev));
     }
     
     
     public void resetCountInWindow() {
-        // var currCount = countInWindow.get(); 
-        // var overflow = currCount > maxEvents; 
         this.countInWindow.set(0);
-        // if(overflow) {
-        //     throw new TooManyEventsInWindowException(maxEvents, currCount);
-        // }
     }
 
     public long getCountInWindow() {

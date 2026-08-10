@@ -6,11 +6,11 @@ import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class TimelineManagerConcurrencyTest {
+class TimelineManagerChaoticTest {
 
     @Test
     void testChaoticConcurrencyOnTimelineManager() throws InterruptedException {
-        int maxEvents = 100_00;
+        int maxEvents = 1_000;
         int window = 1000;
         int nTimelines = 3;
         var manager = new TimelineManager(maxEvents, window, nTimelines);

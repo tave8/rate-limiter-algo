@@ -1,12 +1,10 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
+import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,19 +23,34 @@ import java.util.concurrent.TimeUnit;
  *       number of timelines, as each request increments counters across all timelines.</li>
  * </ul>
  */
-public class TimelineManager {
+public class TimelineManager implements RateLimiter<TimelineManager> {
     private final int maxEvents;
     private final long window;
     private final int nTimelines;
     private final List<Timeline> timelines;
+    private final BurstProtection burstProtection;
     
-    public TimelineManager(int maxEvents, long window, int nTimelines) {
+    public TimelineManager(int maxEvents, 
+                           long window, 
+                           int nTimelines,
+                           BurstProtection burstProtection) 
+    {
         this.maxEvents = maxEvents;
         this.window = window;
         this.nTimelines = nTimelines;
         this.timelines = new ArrayList<>();
+        this.burstProtection = burstProtection;
         init();
     }
+    
+    
+    public TimelineManager(int maxEvents,
+                           long window,
+                           int nTimelines) 
+    {
+        this(maxEvents, window, nTimelines, BurstProtection.buildNormal(maxEvents, window));
+    }
+
 
 
     /**
@@ -183,15 +196,30 @@ public class TimelineManager {
     }
     
 
-    // public boolean canAdd(int nEvents) {
-    //     // Check if all timelines can add event
-    //     for (var timeline : timelines) {
-    //         if(!timeline.canAdd(nEvents)) {
-    //             return false;
-    //         }
-    //     }
-    //     return true;
-    // }
+    public boolean canAdd(int nEvents) {
+        // Check if all timelines can add event
+        for (var timeline : timelines) {
+            if(!timeline.canAdd(nEvents)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int getMaxEvents() {
+        return maxEvents;
+    }
+
+    @Override
+    public long getWindow() {
+        return window;
+    }
+
+
+    public BurstProtection getBurstProtection() {
+        return burstProtection;
+    }
     
     // public boolean canAdd() {
     //     return canAdd(1);
