@@ -14,7 +14,15 @@ class TimelineManagerStableTest {
         int maxEvents = 100;
         int windowMs = 1000;
         int nTimelines = 3;
-        // FIX: Impossible that 99.9% of events were added in 0.1% of window!
+
+
+        // EventFilterer fil = (t) -> {
+        //     if(t.isBeforeWindowThreshold(.8)) {
+        //         return t.isBeforeEventThreshold(.95);
+        //     }
+        //     return true;
+        // };
+
         var manager = new TimelineManager(maxEvents, windowMs, nTimelines);
 
         AtomicLong attempted = new AtomicLong(0);

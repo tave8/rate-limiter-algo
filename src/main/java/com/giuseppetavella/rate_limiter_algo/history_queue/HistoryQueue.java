@@ -1,6 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
+import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import com.giuseppetavella.rate_limiter_algo.TimeUtil;
 import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 
@@ -33,7 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  * @author Giuseppe Tavella
  */
-public class HistoryQueue {
+public class HistoryQueue implements RateLimiter {
     private final LinkedList<Event> queue;
     private final long window;
     // Max items in period
@@ -113,6 +114,7 @@ public class HistoryQueue {
         return add(eventName+"");
     }
     
+    @Override
     public HistoryQueue add()
                             throws TooManyEventsInWindowException 
     {
@@ -125,6 +127,7 @@ public class HistoryQueue {
      *
      * @return
      */
+    @Override
     public boolean canAdd(int nEvents) {
         readQueueLock.lock();
         
@@ -365,9 +368,20 @@ public class HistoryQueue {
                             +"dprev = delta to previous ; dnow = delta to now ; \n"
                             +"th = thread name \n");
     }
-    
-    
-    
+
+
+
+    @Override
+    public int getMaxEvents() {
+        return maxEvents;
+    }
+
+    @Override
+    public long getWindow() {
+        return window;
+    }
+
+
     @Override
     public String toString() {
         return "HistoryQueue{" +

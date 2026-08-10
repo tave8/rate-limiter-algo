@@ -13,7 +13,16 @@ class TimelineManagerChaoticTest {
         int maxEvents = 1_000;
         int window = 1000;
         int nTimelines = 3;
-        var manager = new TimelineManager(maxEvents, window, nTimelines);
+
+
+        EventFilterer fil = (t) -> {
+            if(t.isBeforeWindowThreshold(.8)) {
+                return t.isBeforeEventThreshold(.95);
+            }
+            return t.isBeforeEventThreshold(.97);
+        };
+
+        var manager = new TimelineManager(maxEvents, window, nTimelines, fil).verbose(true);
 
         int poolSize = 16;
         int burstThreads = 8;

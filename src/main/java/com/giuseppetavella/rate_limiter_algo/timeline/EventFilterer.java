@@ -64,7 +64,17 @@ import java.util.function.Function;
  * }
  * </pre>
  * 
- * 
+ * Or this more preventive implementation: 
+ *
+ * <pre>{@code
+ *     EventFilterer fil = (t) -> {
+ *          if(t.isBeforeWindowThreshold(.8)) {  // Is < 80% of window?
+ *              return t.isBeforeEventThreshold(.95); // If < 95% of max events, can add. Else reject.
+ *          }
+ *          return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
+ *     };
+ * }
+ * </pre> 
  * <br>
 
  *

@@ -1,6 +1,5 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.EventsAddedTooFastException;
 import com.giuseppetavella.rate_limiter_algo.TimeUtil;
 import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 
@@ -24,9 +23,14 @@ public class Timeline {
     private boolean hasSpaceForEvents(int nEvents) {
         return countInWindow.get() + nEvents <= maxEvents; // No overflow 
     }
-    
-    private EventFilterer getEventFilterer() {
-        return manager.getEventFilterer();
+
+    /**
+     * Shortcut for applying user-defined filter on this timeline instance.
+     * 
+     * @return if true, event can be added. if false, event must be rejected.
+     */
+    private boolean applyFilter() {
+        return manager.getEventFilterer().apply(this);
     }
     
     /**
@@ -36,9 +40,8 @@ public class Timeline {
      * @return
      */
     public boolean canAdd(int nEvents) {
-        return !hasSpaceForEvents(nEvents) && !(getEventFilterer().apply(this));
+        return hasSpaceForEvents(nEvents) && !applyFilter();
     }
-    
 
 
     /**
@@ -51,8 +54,8 @@ public class Timeline {
             throw new TooManyEventsInWindowException(maxEvents);
         }
         
-        if( !(getEventFilterer().apply(this)) ) {
-            throw new EventsAddedTooFastException(
+        if(!applyFilter()) { 
+            throw new EventFilteredOutException(
                     maxEvents, 
                     countInWindow.get(), 
                     "Now: %d, Window start: %d, Diff: %d".formatted(getNow(), windowStart.get(), getNow()-windowStart.get())
@@ -62,8 +65,10 @@ public class Timeline {
         this.countInWindow.getAndIncrement();
         return this;
     }
-    
 
+    // *****************
+    // BUILT-IN FILTERS
+    // *****************
 
     public boolean isBeforeEventThreshold(double breakpoint) {
         double p = (double) getCountInWindow() / manager.getMaxEvents();

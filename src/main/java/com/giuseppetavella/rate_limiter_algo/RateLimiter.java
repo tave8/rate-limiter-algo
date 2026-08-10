@@ -1,8 +1,8 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-public interface RateLimiter<T> {
+public interface RateLimiter {
+    boolean canAdd(int nEvents);
+    RateLimiter add();
     int getMaxEvents();
     long getWindow();
-    boolean canAdd(int nEvents);
-    T add();
 }
