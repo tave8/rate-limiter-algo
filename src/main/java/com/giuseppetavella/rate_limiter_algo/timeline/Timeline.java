@@ -19,9 +19,15 @@ public class Timeline {
         this.countInWindow = new AtomicLong(0);
         this.windowStart = new AtomicLong(getNow());
     }
-    
+
+    /**
+     * Is there space for new events?
+     * 
+     * @param nEvents
+     * @return
+     */
     private boolean hasSpaceForEvents(int nEvents) {
-        return countInWindow.get() + nEvents <= maxEvents; // No overflow 
+        return countInWindow.get() + nEvents <= maxEvents;
     }
 
     /**
@@ -29,8 +35,17 @@ public class Timeline {
      * 
      * @return if true, event can be added. if false, event must be rejected.
      */
-    private boolean applyFilter() {
+    private boolean filterIn() {
         return manager.getEventFilterer().apply(this);
+    }
+
+    /**
+     * Shortcut for applying user-defined filter on this timeline instance.
+     *
+     * @return if true, event must be rejected. if false, event can be added.
+     */
+    private boolean filterOut() {
+        return !filterIn();
     }
     
     /**
@@ -40,7 +55,7 @@ public class Timeline {
      * @return
      */
     public boolean canAdd(int nEvents) {
-        return hasSpaceForEvents(nEvents) && !applyFilter();
+        return hasSpaceForEvents(nEvents) && filterIn();
     }
 
 
@@ -54,7 +69,7 @@ public class Timeline {
             throw new TooManyEventsInWindowException(maxEvents);
         }
         
-        if(!applyFilter()) { 
+        if(filterOut()) { 
             throw new EventFilteredOutException(
                     maxEvents, 
                     countInWindow.get(), 
@@ -64,6 +79,19 @@ public class Timeline {
         
         this.countInWindow.getAndIncrement();
         return this;
+    }
+    
+    /**
+     * Refresh the current period.
+     */
+    public void refresh() {
+        resetCountInWindow();
+        this.windowStart.set(getNow());
+    }
+    
+    
+    public void resetCountInWindow() {
+        this.countInWindow.set(0);
     }
 
     // *****************
@@ -90,18 +118,6 @@ public class Timeline {
     }
     
     
-    /**
-     * Refresh the current period.
-     */
-    public void refresh() {
-        resetCountInWindow();
-        this.windowStart.set(getNow());
-    }
-    
-    
-    public void resetCountInWindow() {
-        this.countInWindow.set(0);
-    }
 
     public long getCountInWindow() {
         return countInWindow.get();
