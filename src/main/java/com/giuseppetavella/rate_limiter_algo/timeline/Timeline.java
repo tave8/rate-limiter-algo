@@ -77,7 +77,8 @@ public class Timeline {
         if(!canAdd()) {
             throw new TooManyEventsInWindowException(maxEvents);
         }
-        
+
+        // System.out.println(isThisLastBuffer());
         if(isThisLastBuffer()) {
             if(hasReachedPercThreshold()) {
                 // System.out.println("curr events / max events: %f perc".formatted(currPerc));

@@ -1,6 +1,6 @@
 ### Timeline
 
-The Timeline implementation is a non-deterministic algorithm for Rate Limiting. It gives up determinism and loosens up events count accuracy, to gain in efficiency, speed and scalability.
+The Rate Limiter implementation gives up determinism and loosens up events count accuracy, to gain in efficiency, speed and scalability.
 
 Rate limiting accuracy, which comes down to events count accuracy in the time window, depends on the number of timelines, which is configurable. It is also affected by thread context switching. 
 

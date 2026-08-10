@@ -208,6 +208,8 @@ public class TimelineManager {
     private Runnable buildScheduledTask(int timelineIdx) {
         return () -> {
             try {
+                // System.out.println(calcLastBuffer());
+                
                 var timeline = timelines.get(timelineIdx);
                 System.out.println("[timeline %d] resetting count in window... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
                 // Get the timeline associated to this thread
