@@ -57,6 +57,8 @@ RateLimiter rateLimiter3 = new TimelineManager(maxEvents, window); // Its own hi
 
 ### Implementation-specific usage
 
+#### Event Filtering (Timeline Manager)
+
 Timeline Manager supports custom event filtering logic. This allows you to create custom burst protection logic, for example. As the name suggests, the filter is applied for each new event, only after the condition "is there enough space for a new event" evaluates to true. Here's how easy it is to create your custom event filterer.
 
 ```java
@@ -72,7 +74,39 @@ EventFilterer fil = (t) -> {
 RateLimiter rateLimiter = new TimelineManager(maxEvents, window, fil); 
 ```
 
-History Queue supports a "fast-forwarding time" functionality that allows for running tests without actually waiting. It is essentially about making time pass logically without having to wait physically, and because each History Queue instance has its own "concept of time", each successive call to the same instance will produce the expected result with the correct timing, even with actual time passed both preceding or following artificial time added. Note: At the moment the `after()` method has public visibility, but it should only be used in testing.  
+#### Fast-forwarding Time (History Queue)
+
+Initially, I had to wait for tests to finish because physical time passed is the whole point of testing a rate limiter. But that wasn't sustainable.
+
+Now, I can simulate the wait without actually waiting, all the while still being able to wait physically correctly, and now I can run tests in milliseconds. How?
+
+History Queue supports a "fast-forwarding time" functionality that allows for running tests without actually waiting. It is essentially about making time pass logically without having to wait physically, and because each History Queue instance has its own "concept of time", each successive call to the same instance will produce the expected result with the correct timing, even with actual time passed both preceding or following artificial time added. Note: At the moment the `after()` method has public visibility, but it should only be used in testing.
+
+The following examples are logically equivalent. 
+
+Waiting for physical time only:
+
+```java
+RateLimiter rateLimiter = new HistoryQueue(maxEvents, window);
+
+rateLimiter.add();
+
+Thread.sleep(950);
+
+rateLimiter.add();
+            .add();
+
+Thread.sleep(1050);
+
+rateLimiter.add();
+
+Thread.sleep(1000);
+
+rateLimiter.add();
+```
+
+Using a mix of artificial time and physical time:
+
 
 ```java
 RateLimiter rateLimiter = new HistoryQueue(maxEvents, window);
@@ -90,13 +124,14 @@ rateLimiter.add()
 Thread.sleep(1000);
 
 // When adding this event (if it's not rejected) the History Queue instance 
-// cannot tell the difference between actual physical time passed (3 seconds)
+// cannot tell the difference between actual physical time passed (1000ms)
 // and logical time we have artificially added. So adding a new event
 // at this point in time will be like having waited for "950ms + 1050ms + 1000ms",
-// of which the first two are artificial and the third is physical. 
+// of which the first two are artificial and the third is physical time. 
 // Again, this is local to the History Queue instance.
 rateLimiter.add();
 ```
+
 
 
 
