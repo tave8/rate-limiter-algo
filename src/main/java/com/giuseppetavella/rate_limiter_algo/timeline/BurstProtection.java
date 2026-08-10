@@ -75,10 +75,14 @@ public class BurstProtection {
         return p >= eventThreshold;
     }
 
+    // FIX: whaat does it mean "reached window threshold"? 
+    // you mean that it's before the window threshold?
     public boolean hasReachedWindowThreshold(long now, long windowStart) {
         double p = (double) (now - windowStart) / window;
         return p >= windowThreshold;
     }
+    
+
 
 
     /**

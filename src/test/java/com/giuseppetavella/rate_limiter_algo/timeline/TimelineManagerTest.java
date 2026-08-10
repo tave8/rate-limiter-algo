@@ -277,7 +277,15 @@ class TimelineManagerTest {
         var maxEvents = 100;
         var window = 1000;
         var nTimelines = 3;
-        var manager = new TimelineManager(maxEvents, window, nTimelines);
+        
+        BurstProtector bp = (t) -> {
+            if(t.isBeforeWindowThreshold(.8)) {
+                return t.isBeforeEventThreshold(.95);
+            }
+            return true;
+        };
+        
+        var manager = new TimelineManager(maxEvents, window, nTimelines, bp);
 
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();

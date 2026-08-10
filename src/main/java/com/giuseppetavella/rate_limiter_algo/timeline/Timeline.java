@@ -10,7 +10,7 @@ public class Timeline {
     private final int maxEvents;
     private final AtomicLong countInWindow;
     private final TimelineManager manager;
-    private volatile long windowStart;
+    private final AtomicLong windowStart;
     private final TimeUtil util;
     
     public Timeline(int maxEvents, TimelineManager manager) {
@@ -18,11 +18,15 @@ public class Timeline {
         this.maxEvents = maxEvents;
         this.manager = manager;
         this.countInWindow = new AtomicLong(0);
-        this.windowStart = getNow();
+        this.windowStart = new AtomicLong(getNow());
     }
     
     private boolean hasSpaceForEvents(int nEvents) {
         return countInWindow.get() + nEvents <= maxEvents; // No overflow 
+    }
+    
+    private BurstProtector getBurstProtector() {
+        return manager.getBurstProtector();
     }
     
     /**
@@ -32,70 +36,24 @@ public class Timeline {
      * @return
      */
     public boolean canAdd(int nEvents) {
-        if(!hasSpaceForEvents(nEvents)) {
-            return false;
-        }
+        return !hasSpaceForEvents(nEvents) && !(getBurstProtector().apply(this));
         
-        if(manager.getBurstProtection().isEnabled()) {
-            if(hasReachedWindowThreshold()) {
-                return !hasReachedEventThreshold();
-            }
-        }
-        
-        return true;
+        // if(!hasSpaceForEvents(nEvents)) {
+        //     return false;
+        // }
+        //
+        //
+        //
+        // if(isBurstProtectionEnabled()) {
+        //     if(hasReachedWindowThreshold()) {
+        //         return !hasReachedEventThreshold(); // Can add only if not reached event threshold
+        //     }
+        // }
+        //
+        // return true;
     }
     
 
-    /**
-     * Is this the last time buffer in the window?
-     * 
-     * Here's an example with 3 Timelines. The asterisks represent the 
-     * time in the last buffer in each window in each timeline.
-     * 
-     * <pre>
-     *     ------------------------------------------------------> time
-     *     
-     *                *****          *****          *****
-     *     |--------------|--------------|--------------|
-     *                     *****          *****          *****
-     *          |--------------|--------------|--------------|
-     *                          *****          *****          *****
-     *               |--------------|--------------|--------------|
-     * </pre>
-     * 
-     * This can be used to create custom rate limiting logic such as: 
-     * "If a new event is trying to be added in the last buffer period, 
-     * and 95% of events have already been added from the start of this period
-     * (in percentage to the max events allowed in the window), then disallow insertion
-     * of new events before you even get to the exact max events (we assume you'll get there, 
-     * so preventive back-off)".
-     * 
-     * @return
-     */
-    // public boolean isThisLastBuffer() {
-    //     var startLastBuffer = windowStart + manager.calcLastBuffer();
-    //     return getNow() >= startLastBuffer;
-    // }
-
-
-    /**
-     * Shortcut. 
-     * 
-     * @return
-     */
-    private boolean hasReachedEventThreshold() {
-       return manager.getBurstProtection().hasReachedEventThreshold(countInWindow.get()); 
-    }
-
-
-    /**
-     * Shortcut.
-     * 
-     * @return
-     */
-    private boolean hasReachedWindowThreshold() {
-        return manager.getBurstProtection().hasReachedWindowThreshold(getNow(), windowStart);
-    }
 
     /**
      * Add a new event.
@@ -107,10 +65,12 @@ public class Timeline {
             throw new TooManyEventsInWindowException(maxEvents);
         }
         
-        if(manager.getBurstProtection().isEnabled()) {
-            if(hasReachedWindowThreshold() && hasReachedEventThreshold()) {
-                throw new EventsAddedTooFastException(maxEvents, countInWindow.get());
-            }
+        if( !(getBurstProtector().apply(this)) ) {
+            throw new EventsAddedTooFastException(
+                    maxEvents, 
+                    countInWindow.get(), 
+                    "Now: %d, Window start: %d, Diff: %d".formatted(getNow(), windowStart.get(), getNow()-windowStart.get())
+            );
         }
         
         this.countInWindow.getAndIncrement();
@@ -145,12 +105,33 @@ public class Timeline {
     //     return currPerc >= percThreshold;
     // }
 
+
+    public boolean isBeforeEventThreshold(double breakpoint) {
+        double p = (double) getCountInWindow() / manager.getMaxEvents();
+        return p < breakpoint;
+    }
+
+    public boolean isAfterEventTreshold(double breakpoint) {
+        return !isBeforeEventThreshold(breakpoint);
+    }
+
+
+    public boolean isBeforeWindowThreshold(double breakpoint) {
+        double p = (double) (getNow() - windowStart.get()) / manager.getWindow();
+        return p < breakpoint;
+    }
+
+    public boolean isAfterWindowThreshold(double breakpoint) {
+        return !isBeforeWindowThreshold(breakpoint);
+    }
+    
+    
     /**
      * Refresh the current period.
      */
     public void refresh() {
         resetCountInWindow();
-        this.windowStart = getNow();
+        this.windowStart.set(getNow());
     }
     
     
@@ -165,4 +146,65 @@ public class Timeline {
     public long getNow() {
         return util.getNow();
     }
+
+    /**
+     * Is this the last time buffer in the window?
+     *
+     * Here's an example with 3 Timelines. The asterisks represent the 
+     * time in the last buffer in each window in each timeline.
+     *
+     * <pre>
+     *     ------------------------------------------------------> time
+     *
+     *                *****          *****          *****
+     *     |--------------|--------------|--------------|
+     *                     *****          *****          *****
+     *          |--------------|--------------|--------------|
+     *                          *****          *****          *****
+     *               |--------------|--------------|--------------|
+     * </pre>
+     *
+     * This can be used to create custom rate limiting logic such as: 
+     * "If a new event is trying to be added in the last buffer period, 
+     * and 95% of events have already been added from the start of this period
+     * (in percentage to the max events allowed in the window), then disallow insertion
+     * of new events before you even get to the exact max events (we assume you'll get there, 
+     * so preventive back-off)".
+     *
+     * @return
+     */
+    // public boolean isThisLastBuffer() {
+    //     var startLastBuffer = windowStart + manager.calcLastBuffer();
+    //     return getNow() >= startLastBuffer;
+    // }
+
+
+    /**
+     * Shortcut. 
+     *
+     * @return
+     */
+    // private boolean hasReachedEventThreshold() {
+    //     return manager.getBurstProtection().hasReachedEventThreshold(countInWindow.get());
+    // }
+    //
+    //
+    // /**
+    //  * Shortcut.
+    //  *
+    //  * @return
+    //  */
+    // private boolean hasReachedWindowThreshold() {
+    //     return manager.getBurstProtection().hasReachedWindowThreshold(getNow(), windowStart.get());
+    // }
+    //
+    // /**
+    //  * Shortcut.  
+    //  *
+    //  * @return
+    //  */
+    // private boolean isBurstProtectionEnabled() {
+    //     return manager.getBurstProtection().isEnabled();
+    // }
+
 }

@@ -4,8 +4,11 @@ import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A Rate Limiter implementation prioritizing efficiency and speed over absolute accuracy.
@@ -28,18 +31,18 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
     private final long window;
     private final int nTimelines;
     private final List<Timeline> timelines;
-    private final BurstProtection burstProtection;
+    private final BurstProtector burstProtector;
     
-    public TimelineManager(int maxEvents, 
-                           long window, 
+    public TimelineManager(int maxEvents,
+                           long window,
                            int nTimelines,
-                           BurstProtection burstProtection) 
+                           BurstProtector bp) 
     {
         this.maxEvents = maxEvents;
         this.window = window;
         this.nTimelines = nTimelines;
         this.timelines = new ArrayList<>();
-        this.burstProtection = burstProtection;
+        this.burstProtector = bp;
         init();
     }
     
@@ -48,8 +51,9 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
                            long window,
                            int nTimelines) 
     {
-        this(maxEvents, window, nTimelines, BurstProtection.buildNormal(maxEvents, window));
+        this(maxEvents, window, nTimelines, (_) -> true);
     }
+
 
 
 
@@ -177,9 +181,9 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
      * @return a number, in milliseconds, that indicates the buffer (almost like a left padding)
      *          that can be added to the window start, to get the buffer start
      */
-    public long calcLastBuffer() {
-        return calcBuffer(nTimelines-1);
-    }
+    // public long calcLastBuffer() {
+    //     return calcBuffer(nTimelines-1);
+    // }
 
 
     /**
@@ -217,8 +221,8 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
     }
 
 
-    public BurstProtection getBurstProtection() {
-        return burstProtection;
+    public BurstProtector getBurstProtector() {
+        return burstProtector;
     }
     
     // public boolean canAdd() {
@@ -239,7 +243,7 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
                 // System.out.println(calcLastBuffer());
                 
                 var timeline = timelines.get(timelineIdx);
-                System.out.println("[timeline %d] resetting count in window... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
+                System.out.println("[timeline %d] resetting count... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
                 // Get the timeline associated to this thread
                 timeline.refresh();
 

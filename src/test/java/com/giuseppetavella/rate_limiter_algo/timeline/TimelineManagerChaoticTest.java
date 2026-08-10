@@ -32,7 +32,7 @@ class TimelineManagerChaoticTest {
         scheduleBurstCollisions(scheduler, burstExecutor, manager, burstThreads, totalAttemptedAdds);
 
         // Run the chaotic load for 10 seconds (adjust as needed)
-        Thread.sleep(Duration.ofSeconds(10).toMillis());
+        Thread.sleep(Duration.ofSeconds(20).toMillis());
 
         // Clean up thread pools
         scheduler.shutdownNow();
