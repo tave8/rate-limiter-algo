@@ -1,170 +1,142 @@
 # Rate Limiter: Algorithm
 
-This is the Algorithm component of my Rate Limiting Project, which also includes a microservice-like architecture where we battle-test the algorithm by simulating client making requests to different services. 
+This is the Rate Limiter Algorithm, which is part of my [Rate Limiter Project](https://github.com/tave8/rate-limiter). 
 
-By rate limiting I mean the logic of limiting how many *events* are *added* during a time *window*.
+This is the simple problem to solve: 
 
-This is the most generic definition I could come up with, here's what it implies: 
+> Limit how many *events* are allowed to be *added* during a time *window*.
+
+However, this problem must be rephrased, including the actual constraints and usability requirements:
+
+> ...and do so in an efficient manner that can scale to tens of thousands of events per second without requiring maintenance, in a way such that memory and time do not grow linearly with number of events; providing an easy to use and highly configurable, generic interface that can be used to fit a variety of use cases; providing support for custom burst protection; all of this with good thread-safety guarantees.
+
+Known limitations: 
+
+- This is an in-memory solution, so it does not survive power loss (it's not persistent). It implies that long time windows are not suitable, because the longer the window, the more likely it is it can be interrupted midway and thus lose history.  
+- By in-memory we mean memory on a single machine, so this is not distributed.
+- It is not suitable for sub-millisecond precision. For simplicity, the millisecond was chosen as standard time unit across the entire project.
+
+In practice, use Timeline Manager as the default implementation. 
+
+
+## Usage
+
+A Rate Limiter is, as you might have guessed, an interface. We must instantiate an implementation of a Rate Limiter, to start using it.
+
+```java
+int maxEvents = 100;
+long window = 1000;
+
+RateLimiter rateLimiter1 = new HistoryQueue(maxEvents, window);
+RateLimiter rateLimiter2 = new TimelineManager(maxEvents, window);
+
+rateLimiter1.add();
+rateLimiter2.add();
+
+rateLimiter1.canAdd();
+rateLimiter2.canAdd();
+```
+
+As you can see, because both implementations implement the same interface, you can easily swap one implementation for the other.
+
+The rate limiting is local to each instance, so the history of `rateLimiter1` is different from the history of `rateLimiter2`, and not because they are from different implementations, but simply because they are different instances. In other words, each instance is separated from any other instance, and has its own "history" of events.
+
+Different instances, different rate limiting. This design choice makes the following relationship possible, and it's the pattern you'll see in the entire project: 
+
+> 1 rate limiter instance : 1 service to be rate limited
+
+Simply put, events that need to be rate-limited and are part of the same service must use the same instance.
+
+```java
+RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window); // Its own history
+RateLimiter rateLimiter2 = new TimelineManager(maxEvents, window); // Its own history
+RateLimiter rateLimiter3 = new TimelineManager(maxEvents, window); // Its own history
+```
+
+
+
+### Implementation-specific usage
+
+Timeline Manager supports custom event filtering logic. This allows you to create custom burst protection logic, for example. As the name suggests, the filter is applied for each new event, only after the condition "is there enough space for a new event" evaluates to true. Here's how easy it is to create your custom event filterer.
+
+```java
+// Define custom event filterer
+EventFilterer fil = (t) -> {
+       if(t.isBeforeWindowThreshold(.8)) {  // Is < 80% of window?
+           return t.isBeforeEventThreshold(.95); // If < 95% of max events, can add. Else reject.
+       }
+       return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
+  };
+};
+
+RateLimiter rateLimiter = new TimelineManager(maxEvents, window, fil); 
+```
+
+History Queue supports a "fast-forwarding time" functionality that allows for running tests without actually waiting. It is essentially about making time pass logically without having to wait physically, and because each History Queue instance has its own "concept of time", each successive call to the same instance will produce the expected result with the correct timing, even with actual time passed both preceding or following artificial time added. Note: At the moment the `after()` method has public visibility, but it should only be used in testing.  
+
+```java
+RateLimiter rateLimiter = new HistoryQueue(maxEvents, window);
+
+// All these calls are happening pretty much instantly, so at most 
+// a few nano/micro/milliseconds have actually passed
+rateLimiter.add()         
+            .after(950)
+            .add()
+            .add()
+            .after(1050)
+            .add();
+
+// Imagine some actual time has passed, for example with:
+Thread.sleep(1000);
+
+// When adding this event (if it's not rejected) the History Queue instance 
+// cannot tell the difference between actual physical time passed (3 seconds)
+// and logical time we have artificially added. So adding a new event
+// at this point in time will be like having waited for "950ms + 1050ms + 1000ms",
+// of which the first two are artificial and the third is physical. 
+// Again, this is local to the History Queue instance.
+rateLimiter.add();
+```
+
+
+
+## Definition
+
+Let's better understand the problem:
+
+> Limit how many *events* are allowed to be *added* during a time *window*.
+
+This is the most generic definition I could come up with, here's what it implies:
+
 - An event can be anything, it can be a task, a request etc.
+
 - Adding an event can signify submitting a task, executing a task, when the request is received etc. By design, the algorithm does not know or care about business-specific semantics, task or request lifecyle or things like that. Thus, "adding an event" is the most agnostic concept I could come up with, so you are not tied to use cases and can instead fit your own.
+
 - Window, also known as time window, is the amount of time during which more than the maximum events that you define, cannot occur. More specifically, for a rate limiter, not more than the maximum events that you define can occur between the window start and now. A window is not the same as a period; A window is a fixed amount but it must be calculated from now. So the window start is `window_start = now - window`. On the other hand, you could calculate a period by multiplying some point in time with a factor. For example, multiplying something like `today_midnight + (period * 1)` gives you today at midnight plus the period. `today_midnight + (period * 2)` gives you today at midnight plus the the double of that period, and so on.
 
 Two implementations for a rate limiter are offered: 
 
-- History Queue. This was the first implementation, but it suffers from poor performance. At best, the complexity analysis is O(N) space and time, where N = number of max events, because at best max N events .  
-- Timeline Manager.  
+- History Queue. This was the first implementation, but it suffers from poor performance because it has to literally remember past history. It may be more accurate.
+- Timeline Manager. Second implementation, the most performant.  
 
 
 ## Complexity analysis
 
 Let: 
-- E = number of max events
+- E = number of max events 
+- N = number of total events over time 
 - T = number of timelines
 
-| Implementation   | Dimension | Complexity | Motivation                                                                                 |
-|:-----------------|:----------|:-----------|:-------------------------------------------------------------------------------------------|
-| History Queue    | Space     | O(E)       | Stores every timestamp in the window; memory scales directly with total requests (N).      |
-| History Queue    | Time      | O(E)       | Requires iterating over and pruning expired timestamp logs to calculate the current count. |
-| Timeline Manager | Space     | O(1)       | Does not                                                                                   |
+| Implementation   | Dimension | Method  | Complexity                    | Motivation                               |
+|:-----------------|:----------|:--------|:------------------------------|:-----------------------------------------|
+| History Queue    | Space     | `add()` | O(E) at best, O(N) on average | Stores timestamp for each new event.     |
+| History Queue    | Time      | `add()` | O(E) at worst                 | Requires iterating over past timestamps. |
+| Timeline Manager | Space     | `add()` | O(1)                          | Only a counter is updated.               |
+| Timeline Manager | Time      | `add()` | O(T)                          | Iterate through timelines.               |
 
 
+Because the number of timelines is and should be very low (1-5) and known upfront, maybe we could approximate O(T) to O(1).
 
-
-# Task Limiter
-
-Limit the number of tasks that can be submitted in a given period (rate limiter).
-
-For example, an email API can be sent max 5 emails per second.
-
-- [See use case: 5 emails / second](#5-emails--second)
-
-Notes:
-- This implementation favors simplicity.
-- This is an in-memory solution for simple use cases such as "max 10 tasks per second", "max 50 tasks per minute".
-- It does not survive power loss (it's not persistent).
-- It is not suitable for a large amount of tasks or sub-millisecond precision.
-- However it works fine if you don't care about millisecond precision, task amount is reasonable (0-1000) and in general non-mission-critical operations.
-
-
-## Get started
-
-1. Clone all repositories into the same directory
-2. Open a terminal in that directory
-3. Run the python script `python server_automation.py`.
-
-If you don't change anything manually, this is all you need to do.
-
-Note: The processes currently open at the ports that are intended for usage in this project, will be killed. Running the command builds each server and runs it; It does not automatically update the urls/ports for each subproject. So if you change ports, you also have to update the urls/ports manually, where relevant. Fortunately, it's very easy; Just go in the `resources` directory for the *client* and *rate limiter*, and update the json that you see in there, with the new url/port.
-
-
-
-## Usage
-
-
-You can subclass `com.giuseppetavella.core.TaskLimiter` to fit your use cases.
-
-The limits are applied to the com.giuseppetavella.core.TaskLimiter object, so tasks that need to be rate-limited must go through the same instance, because the instance contains the history of task submissions.
-
-### Simple usage
-
-```java
-import com.giuseppetavella.core.TaskLimiter;
-
-// STEP 1: Instantiate
-TaskLimiter taskLimiter = new TaskLimiter(5, 1000); // Max 5 tasks per 1000 milliseconds (1 second)
-
-        // STEP 2: Have a task ready  
-        Callable<String> task = () -> {
-          return "future result";
-        };
-
-        // STEP 3: Submit a task through the task limiter
-// We can submit 5 tasks because that is the limit
-        Future<String> result1 = taskLimiter.submitOrThrow(task); // Try submitting a task. If rate overflow, custom exception is thrown 
-        Future<String> result2 = taskLimiter.submitOrThrow(task);
-        Future<String> result3 = taskLimiter.submitOrThrow(task);
-        Future<String> result4 = taskLimiter.submitOrThrow(task);
-        Future<String> result5 = taskLimiter.submitOrThrow(task);
-        Future<String> result6 = taskLimiter.submitOrThrow(task); // Exception is thrown here because rate overflow (6th task in same second)
-
-```
-
-### Advanced usage
-
-```java
-import com.giuseppetavella.core.TaskLimiter;
-
-// Upon instantation, you can optionally pass a custom thread pool. 
-// If you do not, one will be created for you.
-ExecutionService executor = Executors.newVirtualThreadPerTaskExecutor();
-
-        TaskLimiter taskLimiter = new TaskLimiter(5, 1000, executor); // Max 5 tasks per 1000 milliseconds (1 second)
-
-```
-
-
-## Use cases
-
-### 5 emails / second
-
-```java
-
-import com.giuseppetavella.EmailLimiter;
-
-com.giuseppetavella.core.TaskLimiter emailLimiter = new EmailLimiter(5, 1); // Max 5 emails per second
-
-// // STEP 2: Have a task ready  
-// Callable<String> emailTask = () -> {
-//     Thread.sleep(Duration.ofMillis(1000)); // 
-//     return "future result";
-// };
-//
-// // STEP 3: Submit a task through the task limiter
-// // We can submit 5 tasks because that is the limit
-// Future<String> result1 = taskLimiter.submitOrThrow(task); // Try submitting a task. If rate overflow, custom exception is thrown 
-```
-
-
-## Build & Docker
-
-Run both containers (rate limiter and rate limiter server):
-
-```
-docker run -p 9000:9000 -d rate-limiter
-
-docker run -p 9100:9100 -d rate-limiter-server
-
-```
-
-To change the output jar, add this to your pom.xml (inside the "build" tag):
-
-```xml
-<build>
-    <finalName>app</finalName>
-</build>
-
-```
-
-
-Then:
-
-Every time you make a change to the project, you need to build into a jar, like so
-(Make sure to  use the --build flag for Docker Compose; if you use just click on Docker Compose from the IDE,
-it's likely you won't see the updated project, because Docker will has cached the image. With --build, you force
-to rebuild the image.):
-
-`
-./mvnw clean package -DskipTests
-
-docker compose up --build
-`
-
-1. Have Dockerfile ready
-2. Have Docker Compose file ready
-3. Make sure Docker daemon is running
-4. Build the image: `docker build -t rate-limiter .`
-5. Run the image manually, to make sure container and port mapping are ok. Command: `docker run -p 9000:9000 rate-limiter`
-6. Run the Docker Compose, so you can start all containers/services at once. Command: `docker compose up --build`
 
 
 ## Reasoning & Challenges
@@ -246,16 +218,7 @@ It's on this intuition that a solution was created to simulate waiting without a
 Each history queue has its own concept of time and can be easily modified.
 
 
-
-
-int maxEvents = 100;
-        long window = 1000;
-        
-        RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window);
-        RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window);
-
-
-### Timeline
+### Implementation: Timeline Manager 
 
 The Rate Limiter implementation gives up determinism and loosens up events count accuracy, to gain in efficiency, speed and scalability.
 

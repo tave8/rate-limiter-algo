@@ -113,6 +113,11 @@ public class TimelineManager implements RateLimiter {
     }
 
     @Override
+    public boolean canAdd() {
+        return canAdd(1);
+    }
+
+    @Override
     public int getMaxEvents() {
         return maxEvents;
     }

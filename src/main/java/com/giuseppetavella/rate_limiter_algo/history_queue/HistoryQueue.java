@@ -149,6 +149,7 @@ public class HistoryQueue implements RateLimiter {
      *
      * @return
      */
+    @Override
     public boolean canAdd() {
         return canAdd(1);
     }
