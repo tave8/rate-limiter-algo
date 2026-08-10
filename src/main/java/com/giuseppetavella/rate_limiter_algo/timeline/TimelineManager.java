@@ -36,26 +36,7 @@ public class TimelineManager {
         this.window = window;
         this.nTimelines = nTimelines;
         this.timelines = new ArrayList<>();
-
-        // Build timelines
-        for (int i = 0; i < nTimelines; i++) {
-            timelines.add(new Timeline(maxEvents));
-        }
-
-        // Schedule as many threads as timelines
-        // TODO: schedule always one thread, but run the tasks 
-        // as if they still had the same effect.
-        
-        for (int i = 0; i < nTimelines; i++) {
-            var scheduler = Executors.newSingleThreadScheduledExecutor();
-            scheduler.scheduleAtFixedRate(
-                    buildScheduledTask(i), 
-                    calcInitialDelay(i), 
-                    window, 
-                    TimeUnit.MILLISECONDS
-            );
-        }
-        
+        init();
     }
 
 
@@ -133,33 +114,66 @@ public class TimelineManager {
      * @return
      */
     private long calcInitialDelay(int timelineIdx) {
-        return (window / nTimelines) * timelineIdx;  
+        return calcBuffer(timelineIdx);
+    }
+
+    /**
+     * Calculate the time buffer, which is simply the number of milliseconds 
+     * representing some amount of time that is proportional to the window.
+     * 
+     * <br>
+     * It's used in a formula like <code>windowStart + lastBuffer</code>
+     * to effectively locate the start of the last buffer in the current period.
+     * 
+     * <br><br>
+     * Some useful cases:
+     * <ul>
+     *     <li>A factor of 0 returns 0.</li>
+     *     <li>A factor of <code>nTimelines-1</code> is used to locate 
+     *          the start of the last buffer in the current period.  
+     *     <li>A factor of <code>nTimelines</code> is equivalent to end of the window.</li>
+     * </ul>
+     *
+     * 
+     * @return
+     */
+    public long calcBuffer(int factor) {
+        return (window / nTimelines) * factor;
     }
 
     
     /**
-     * Get the timeline associated to the scheduler,
-     * and reset its count in window.
+     * Calculate the last time buffer of the window.
+     * This is useful for knowing whether we are "towards the end"
+     * of a window.
      * 
-     * @param timelineIdx
+     * <pre>
+     *     ------------------------------------------------------> time
+     *           
+     *                 |--- buffer start
+     *    window start |           
+     *     |           v
+     *     v           *****          *****          *****
+     *     |--------------|--------------|--------------|     timeline
+     *     
+     *     |----------|
+     *      last buffer 
+     *      
+     * </pre>
+     * 
+     * @return a number, in milliseconds, that indicates the buffer (almost like a left padding)
+     *          that can be added to the window start, to get the buffer start
+     */
+    public long calcLastBuffer() {
+        return calcBuffer(nTimelines-1);
+    }
+
+
+    /**
+     * Add a new event.
+     * 
      * @return
      */
-    private Runnable buildScheduledTask(int timelineIdx) {
-        return () -> {
-            // try {
-                var timeline = timelines.get(timelineIdx);
-                System.out.println("[timeline %d] resetting count in window... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
-                // Get the timeline associated to this thread
-                timeline.resetCountInWindow();
-                
-            // } catch (TooManyEventsInWindowException e) {
-            //     // System.out.println(e.getMessage());
-            //     // throw new RuntimeException(e);
-            // }
-        };
-    }
-    
-    
     public TimelineManager add() {
         // Add event to all timelines
         for (var timeline : timelines) {
@@ -168,6 +182,7 @@ public class TimelineManager {
         return this;
     }
     
+
     // public boolean canAdd(int nEvents) {
     //     // Check if all timelines can add event
     //     for (var timeline : timelines) {
@@ -181,5 +196,54 @@ public class TimelineManager {
     // public boolean canAdd() {
     //     return canAdd(1);
     // }
-    
+
+
+    /**
+     * Get the timeline associated to the scheduler,
+     * and reset its count in window.
+     *
+     * @param timelineIdx
+     * @return
+     */
+    private Runnable buildScheduledTask(int timelineIdx) {
+        return () -> {
+            try {
+                var timeline = timelines.get(timelineIdx);
+                System.out.println("[timeline %d] resetting count in window... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
+                // Get the timeline associated to this thread
+                timeline.refresh();
+
+            } catch (RuntimeException e) {
+                System.out.println("UNCAUGHT EXCEPTION IN SCHEDULER THREAD: " + e.getMessage());
+                // throw new RuntimeException(e);
+            }
+        };
+    }
+
+    /**
+     * Initialize instance. Must not be executed twice.
+     */
+    private void init() {
+        // Build timelines
+        for (int i = 0; i < nTimelines; i++) {
+            timelines.add(new Timeline(maxEvents, this));
+        }
+
+        // Schedule as many threads as timelines
+        // TODO: schedule always one thread, but run the tasks 
+        // as if they still had the same effect.
+
+        for (int i = 0; i < nTimelines; i++) {
+            var scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.scheduleAtFixedRate(
+                    buildScheduledTask(i),
+                    calcInitialDelay(i),
+                    window,
+                    TimeUnit.MILLISECONDS
+            );
+        }
+    }
+
+
+
 }

@@ -4,6 +4,7 @@ import com.giuseppetavella.rate_limiter_algo.ConcurrentModifier;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -193,6 +194,52 @@ class TimelineManagerTest {
         Executors.newSingleThreadScheduledExecutor()
                         .scheduleAtFixedRate(scheduledTask, 0, 2, TimeUnit.SECONDS);
         
+
+        Thread.sleep(Duration.ofSeconds(100));
+
+    }
+
+
+    @Test
+    void test8() throws InterruptedException {
+        // 100 events / second
+        var maxEvents = 100;
+        var window = 1000;
+        var nTimelines = 3;
+        var manager = new TimelineManager(maxEvents, window, nTimelines);
+        
+        var concurrentModifier = new ConcurrentModifier();
+        var scheduler = Executors.newSingleThreadScheduledExecutor();
+        
+        // int nThreads = 5000;
+        //
+        // Runnable task = () -> {
+        //     try {
+        //         for (int i = 0; i < 20; i++) {
+        //             manager.add();
+        //         }
+        //     } catch (RuntimeException ex) {
+        //         System.out.println(ex.getMessage());
+        //     }
+        // };
+
+        var eventsPerTask = 20; 
+        var period = window / 5;
+        var random = new Random();
+        // 20 * 5 = 100 events / second
+        
+        Runnable scheduledTask = () -> {
+            var sigma = random.nextInt(-3, 4);
+            try {
+                for (int i = 0; i < eventsPerTask + sigma; i++) {
+                    manager.add();
+                }
+            } catch (RuntimeException ex) {
+                System.out.println(ex.getMessage());
+            }
+        };
+
+        scheduler.scheduleAtFixedRate(scheduledTask, 0, period, TimeUnit.MILLISECONDS);
 
         Thread.sleep(Duration.ofSeconds(100));
 
