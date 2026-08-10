@@ -8,8 +8,6 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class TimelineManagerTest {
     @Test
     void test0() throws InterruptedException {
@@ -278,14 +276,14 @@ class TimelineManagerTest {
         var window = 1000;
         var nTimelines = 3;
         
-        BurstProtector bp = (t) -> {
+        EventFilterer fil = (t) -> {
             if(t.isBeforeWindowThreshold(.8)) {
                 return t.isBeforeEventThreshold(.95);
             }
             return true;
         };
         
-        var manager = new TimelineManager(maxEvents, window, nTimelines, bp);
+        var manager = new TimelineManager(maxEvents, window, nTimelines, fil);
 
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();

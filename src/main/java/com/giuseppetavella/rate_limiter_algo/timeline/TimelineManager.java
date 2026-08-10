@@ -4,11 +4,8 @@ import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A Rate Limiter implementation prioritizing efficiency and speed over absolute accuracy.
@@ -31,18 +28,18 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
     private final long window;
     private final int nTimelines;
     private final List<Timeline> timelines;
-    private final BurstProtector burstProtector;
+    private final EventFilterer eventFilterer;
     
     public TimelineManager(int maxEvents,
                            long window,
                            int nTimelines,
-                           BurstProtector bp) 
+                           EventFilterer fil) 
     {
         this.maxEvents = maxEvents;
         this.window = window;
         this.nTimelines = nTimelines;
         this.timelines = new ArrayList<>();
-        this.burstProtector = bp;
+        this.eventFilterer = fil;
         init();
     }
     
@@ -221,8 +218,8 @@ public class TimelineManager implements RateLimiter<TimelineManager> {
     }
 
 
-    public BurstProtector getBurstProtector() {
-        return burstProtector;
+    public EventFilterer getEventFilterer() {
+        return eventFilterer;
     }
     
     // public boolean canAdd() {

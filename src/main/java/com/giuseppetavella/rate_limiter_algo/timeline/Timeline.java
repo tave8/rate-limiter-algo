@@ -25,8 +25,8 @@ public class Timeline {
         return countInWindow.get() + nEvents <= maxEvents; // No overflow 
     }
     
-    private BurstProtector getBurstProtector() {
-        return manager.getBurstProtector();
+    private EventFilterer getEventFilterer() {
+        return manager.getEventFilterer();
     }
     
     /**
@@ -36,21 +36,7 @@ public class Timeline {
      * @return
      */
     public boolean canAdd(int nEvents) {
-        return !hasSpaceForEvents(nEvents) && !(getBurstProtector().apply(this));
-        
-        // if(!hasSpaceForEvents(nEvents)) {
-        //     return false;
-        // }
-        //
-        //
-        //
-        // if(isBurstProtectionEnabled()) {
-        //     if(hasReachedWindowThreshold()) {
-        //         return !hasReachedEventThreshold(); // Can add only if not reached event threshold
-        //     }
-        // }
-        //
-        // return true;
+        return !hasSpaceForEvents(nEvents) && !(getEventFilterer().apply(this));
     }
     
 
@@ -65,7 +51,7 @@ public class Timeline {
             throw new TooManyEventsInWindowException(maxEvents);
         }
         
-        if( !(getBurstProtector().apply(this)) ) {
+        if( !(getEventFilterer().apply(this)) ) {
             throw new EventsAddedTooFastException(
                     maxEvents, 
                     countInWindow.get(), 
@@ -76,34 +62,7 @@ public class Timeline {
         this.countInWindow.getAndIncrement();
         return this;
     }
-
     
-    /**
-     * Has the count of events in this timeline, in the current period, reached 
-     * a percentage threshold, compared to max events allowed?
-     * 
-     * For example, when this method is called, have 95% of max events 
-     * already been added in the current period?
-     * 
-     * This is useful for implementing preventive back-off, that is, 
-     * instead of waiting to reach exactly 100% of max events, 
-     * disallow new events from being added right now.
-     * 
-     * "Preventing is better than curing" type of thing.
-     * 
-     * When combined with <code>isInLastBuffer()</code>, we can 
-     * create custom logic such as "If a new event is trying to be added 
-     * while we are in the last buffer AND 95% of events has already been reached (in this period), 
-     * then disallow new events from being added right now."
-     *
-     * @return
-     */
-    // public boolean hasReachedPercThreshold() {
-    //     // The percentage of events added compared to the max events
-    //     double currPerc = (double) countInWindow.get() / (double) maxEvents;
-    //     // The percentage of current events is greater than a set percentage threshold
-    //     return currPerc >= percThreshold;
-    // }
 
 
     public boolean isBeforeEventThreshold(double breakpoint) {
@@ -207,4 +166,31 @@ public class Timeline {
     //     return manager.getBurstProtection().isEnabled();
     // }
 
+    /**
+     * Has the count of events in this timeline, in the current period, reached 
+     * a percentage threshold, compared to max events allowed?
+     *
+     * For example, when this method is called, have 95% of max events 
+     * already been added in the current period?
+     *
+     * This is useful for implementing preventive back-off, that is, 
+     * instead of waiting to reach exactly 100% of max events, 
+     * disallow new events from being added right now.
+     *
+     * "Preventing is better than curing" type of thing.
+     *
+     * When combined with <code>isInLastBuffer()</code>, we can 
+     * create custom logic such as "If a new event is trying to be added 
+     * while we are in the last buffer AND 95% of events has already been reached (in this period), 
+     * then disallow new events from being added right now."
+     *
+     * @return
+     */
+    // public boolean hasReachedPercThreshold() {
+    //     // The percentage of events added compared to the max events
+    //     double currPerc = (double) countInWindow.get() / (double) maxEvents;
+    //     // The percentage of current events is greater than a set percentage threshold
+    //     return currPerc >= percThreshold;
+    // }
+    
 }
