@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * A Rate Limiter implementation prioritizing efficiency 
@@ -42,7 +43,7 @@ public class TimelineManager implements RateLimiter {
                            EventFilterer fil,
                            Clock clock) 
                                throws IllegalArgumentException
-    {
+    { 
         if(window < 100) {
             throw new IllegalArgumentException("Time window must be >= 100.");
         }
@@ -241,19 +242,23 @@ public class TimelineManager implements RateLimiter {
             }
         };
     }
+    
+    // public TimelineManager buildTimelines() {
+    //    
+    //     return this;
+    // }
 
     /**
      * Initialize instance. Must not be executed twice.
      */
     private void init() {
-        // Build timelines
-        for (int i = 0; i < nTimelines; i++) {
-            timelines.add(new Timeline(maxEvents, this, clock));
-        }
-
         // Schedule as many threads as timelines
         // TODO: schedule always one thread, but run the tasks 
         // as if they still had the same effect.
+        // Build timelines
+        for (int i = 0; i < nTimelines; i++) {
+            timelines.add(new ReactiveTimeline(maxEvents, this, clock));
+        }
 
         for (int i = 0; i < nTimelines; i++) {
             var scheduler = Executors.newSingleThreadScheduledExecutor();
