@@ -6,5 +6,6 @@ public interface RateLimiter {
     RateLimiter add();
     int getMaxEvents();
     long getWindow();
+    long getCountInWindow();
     RateLimiter after(long delay);
 }

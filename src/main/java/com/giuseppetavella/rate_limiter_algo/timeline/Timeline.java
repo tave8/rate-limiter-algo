@@ -1,7 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
 import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.ClockModifier;
 import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -16,7 +15,7 @@ public class Timeline {
     private final AtomicLong countInWindow;
     private final TimelineManager manager;
     private final AtomicLong windowStart;
-    private final ClockModifier clock;
+    private final Clock clock;
 
     /**
      * 
@@ -27,7 +26,7 @@ public class Timeline {
      */
     public Timeline(int maxEvents, 
                     TimelineManager manager,
-                    ClockModifier clock) 
+                    Clock clock) 
     {
         this.maxEvents = maxEvents;
         this.manager = manager;

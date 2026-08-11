@@ -1,9 +1,10 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
+import com.giuseppetavella.rate_limiter_algo.ClockImpl;
 import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.ClockModifier;
 import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -23,9 +24,9 @@ public class TimelineManager implements RateLimiter {
     private final long window;
     private final int nTimelines;
     private final List<Timeline> timelines;
+    private final Clock clock;
     private final EventFilterer eventFilterer;
     private boolean verbose;
-    private final ClockModifier clock;
     
     /**
      * Most custom.
@@ -39,7 +40,7 @@ public class TimelineManager implements RateLimiter {
                            long window,
                            int nTimelines,
                            EventFilterer fil,
-                           ClockModifier clock) 
+                           Clock clock) 
                                throws IllegalArgumentException
     {
         if(window < 100) {
@@ -60,11 +61,21 @@ public class TimelineManager implements RateLimiter {
 
     public TimelineManager(int maxEvents, 
                            long window, 
-                           int nTimelines, 
-                           EventFilterer eventFilterer) 
+                           int nTimelines,
+                           Clock clock) 
     {
-        this(maxEvents, window, nTimelines, eventFilterer, new Clock());
+        this(maxEvents, window, nTimelines, (_) -> true, clock);
     }
+
+
+    public TimelineManager(int maxEvents,
+                           long window,
+                           int nTimelines,
+                           EventFilterer eventFilterer)
+    {
+        this(maxEvents, window, nTimelines, eventFilterer, new ClockImpl());
+    }
+
 
     /**
      * No filter.
@@ -101,8 +112,8 @@ public class TimelineManager implements RateLimiter {
     @Override
     public TimelineManager add() {
         // Add event to all timelines
-        for (var timeline : timelines) {
-            timeline.add();
+        for (var t : timelines) {
+            t.add();
         }       
         return this;
     }
@@ -110,8 +121,8 @@ public class TimelineManager implements RateLimiter {
     @Override
     public boolean canAdd(int nEvents) {
         // Check if all timelines can add event
-        for (var timeline : timelines) {
-            if(!timeline.canAdd(nEvents)) {
+        for (var t : timelines) {
+            if(!t.canAdd(nEvents)) {
                 return false;
             }
         }
@@ -133,8 +144,31 @@ public class TimelineManager implements RateLimiter {
         return window;
     }
 
+    /**
+     * Note: The count in window, for this implementation, 
+     * is an average of the count in window of all timelines. 
+     * @return
+     */
     @Override
-    public RateLimiter after(long delay) {
+    public long getCountInWindow() {
+        long sum = 0;
+        for (var t : timelines) {
+            sum += t.getCountInWindow();
+        }
+        return sum / timelines.size();
+    }
+
+    /**
+     * Note: Because of how the Timeline algorithm works,
+     * artificial time mechanism might not work as expected, 
+     * because this algorithm needs actual time to run the
+     * timelines on a schedule, and that cannot be faked.
+     * 
+     * @param delay
+     * @return
+     */
+    @Override
+    public TimelineManager after(long delay) {
         clock.after(delay);
         return this;
     }

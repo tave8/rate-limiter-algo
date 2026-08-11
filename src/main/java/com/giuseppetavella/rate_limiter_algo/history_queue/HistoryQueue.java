@@ -1,9 +1,9 @@
 package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
-import com.giuseppetavella.rate_limiter_algo.ClockModifier;
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import com.giuseppetavella.rate_limiter_algo.Clock;
+import com.giuseppetavella.rate_limiter_algo.RateLimiter;
+import com.giuseppetavella.rate_limiter_algo.ClockImpl;
 import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 
 import java.util.LinkedList;
@@ -40,7 +40,7 @@ public class HistoryQueue implements RateLimiter {
     private final long window;
     // Max items in period
     private final int maxEvents;
-    private final ClockModifier clock;
+    private final Clock clock;
     private long cumulativeDelay; // 
     private int nextSeq;
     private long lastLatency;
@@ -52,7 +52,7 @@ public class HistoryQueue implements RateLimiter {
     
     public HistoryQueue(int maxEvents,
                         long window,
-                        ClockModifier clock) 
+                        Clock clock) 
                             throws IllegalArgumentException 
     {
         if(window <= 0) {
@@ -76,7 +76,7 @@ public class HistoryQueue implements RateLimiter {
     }
 
     public HistoryQueue(int maxEvents, long window) {
-        this(maxEvents, window, new Clock());
+        this(maxEvents, window, new ClockImpl());
     }
 
     /**
@@ -334,6 +334,11 @@ public class HistoryQueue implements RateLimiter {
     @Override
     public long getWindow() {
         return window;
+    }
+
+    @Override
+    public long getCountInWindow() {
+        return countInWindow();
     }
 
 

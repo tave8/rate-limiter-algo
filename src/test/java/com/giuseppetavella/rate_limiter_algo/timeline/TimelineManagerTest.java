@@ -1,7 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
+import com.giuseppetavella.rate_limiter_algo.ClockImpl;
 import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.ClockModifier;
 import com.giuseppetavella.rate_limiter_algo.ConcurrentModifier;
 import org.junit.jupiter.api.Test;
 
@@ -197,7 +197,7 @@ class TimelineManagerTest {
     @Test
     void test7() throws InterruptedException {
 
-        ClockModifier clock = new Clock();
+        Clock clock = new ClockImpl();
         
         EventFilterer fil = (t) -> {
             return true;
@@ -290,8 +290,7 @@ class TimelineManagerTest {
 
     @Test
     void test9() throws InterruptedException {
-        // 100 events / second
-        var maxEvents = 100;
+        var maxEvents = 10_000;
         var window = 1000;
         var nTimelines = 3;
         
@@ -299,10 +298,10 @@ class TimelineManagerTest {
             if(t.isBeforeWindowThreshold(.8)) {
                 return t.isBeforeEventThreshold(.95);
             }
-            return true;
+            return t.isBeforeEventThreshold(.97);
         };
         
-        var manager = new TimelineManager(maxEvents, window, nTimelines, fil);
+        var manager = new TimelineManager(maxEvents, window, nTimelines, fil).verbose(true);
 
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -319,8 +318,8 @@ class TimelineManagerTest {
         //     }
         // };
 
-        var eventsPerTask = 10;
-        var period = window / 5;
+        var eventsPerTask = 1000;
+        var period = window / 10;
         var random = new Random();
         // 20 * 5 = 100 events / second
 

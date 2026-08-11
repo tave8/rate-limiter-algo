@@ -10,10 +10,26 @@ public class DemoTest {
         int maxEvents = 100;
         long window = 1000;
         
-        RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window);
-        RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window);
+        Clock testClock = new ClockImpl();
+        Clock clock1 = new ClockImpl();
+        Clock clock2 = new ClockImpl();         
         
-        rateLimiter1.after(100);
+        RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window, 5, clock1).verbose(true);
+        // RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window, clock2);
+        
+        // rateLimiter1.after(100);
+
+        // for (int i = 0; i < 1000; i++) {
+        //     // testClock.after(120);
+        //     // System.out.println(testClock.measureElapsed());
+        //     // testClock.after(100).after(30);
+        //     // clock1.after(150);
+        //     // rateLimiter1.add();
+        //     // System.out.println(rateLimiter1.getCountInWindow());
+        //     // Thread.sleep(150);
+        //     // rateLimiter1.add().after(100);
+        //    
+        // }
         
     }
 }

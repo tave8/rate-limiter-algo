@@ -2,6 +2,7 @@ package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
 import com.giuseppetavella.rate_limiter_algo.ConcurrentModifier;
+import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +26,7 @@ class HistoryQueueConcurrencyTest {
                 })
                 .useRawThreads();
 
-        assertEquals(3, history.countInWindow());
+        assertEquals(3, history.getCountInWindow());
     } 
 
     @Test
@@ -41,7 +42,7 @@ class HistoryQueueConcurrencyTest {
                 }, 1)
                 .concurrently(() -> {
                     history.add(1);
-                    if(history.countInWindow() == 3) {
+                    if(history.getCountInWindow() == 3) {
                         assertFalse(history.canAdd());
                     }
                 }, 2)
@@ -49,7 +50,7 @@ class HistoryQueueConcurrencyTest {
         
         history.printPretty();
 
-        assertEquals(3, history.countInWindow());
+        assertEquals(3, history.getCountInWindow());
     }
 
     @Test
@@ -65,7 +66,7 @@ class HistoryQueueConcurrencyTest {
                 }, "1")
                 .concurrently(() -> {
                     history.add("C");
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, "2")
@@ -77,7 +78,7 @@ class HistoryQueueConcurrencyTest {
 
         history.printPretty();
 
-        assertEquals(5, history.countInWindow());
+        assertEquals(5, history.getCountInWindow());
     }
 
     @Test
@@ -89,31 +90,31 @@ class HistoryQueueConcurrencyTest {
         concurrentModifier
                 .concurrently(() -> {
                     history.add("A");
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 1)
                 .concurrently(() -> {
                     history.add("B");
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 2)
                 .concurrently(() -> {
                     history.add("C");
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 3)
                 .concurrently(() -> {
                     history.add("D");
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 4)
                 .concurrently(() -> {
                     history.add("E");
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 5)
@@ -122,7 +123,7 @@ class HistoryQueueConcurrencyTest {
         history.printPretty();
         
         
-        assertEquals(5, history.countInWindow());
+        assertEquals(5, history.getCountInWindow());
     }
 
     @Test
@@ -136,24 +137,24 @@ class HistoryQueueConcurrencyTest {
                     history.add(1);
                     history.add(2);
                     history.add(3);
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 1)
                 .concurrently(() -> {
                     history.add(4);
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 2)
                 .concurrently(() -> {
                     history.add(5);
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 3)
                 .concurrently(() -> {
-                    if(history.countInWindow() == 5) {
+                    if(history.getCountInWindow() == 5) {
                         assertFalse(history.canAdd());
                     }
                 }, 4)
@@ -161,7 +162,7 @@ class HistoryQueueConcurrencyTest {
 
         history.printPretty();
         
-        assertEquals(5, history.countInWindow());
+        assertEquals(5, history.getCountInWindow());
     }
 
     @Test
@@ -175,36 +176,36 @@ class HistoryQueueConcurrencyTest {
                     history.add(1);
                     history.add(2);
                     history.add(3);
-                    if(history.countInWindow() == 10) {
+                    if(history.getCountInWindow() == 10) {
                         assertFalse(history.canAdd());
                     }
                 }, 1)
                 .concurrently(() -> {
                     history.add(4);
-                    if(history.countInWindow() == 10) {
+                    if(history.getCountInWindow() == 10) {
                         assertFalse(history.canAdd());
                     }
                 }, 2)
                 .concurrently(() -> {
                     history.add(5);
-                    if(history.countInWindow() == 10) {
+                    if(history.getCountInWindow() == 10) {
                         assertFalse(history.canAdd());
                     }
                 }, 3)
                 .concurrently(() -> {
-                    if(history.countInWindow() == 10) {
+                    if(history.getCountInWindow() == 10) {
                         assertFalse(history.canAdd());
                     }
                     history.add(6);
                 }, 4)
                 .concurrently(() -> {
-                    if(history.countInWindow() == 10) {
+                    if(history.getCountInWindow() == 10) {
                         assertFalse(history.canAdd());
                     }
                     history.add(7);
                 }, 5)
                 .concurrently(() -> {
-                    if(history.countInWindow() == 10) {
+                    if(history.getCountInWindow() == 10) {
                         assertFalse(history.canAdd());
                     }
                     history.add(8);
@@ -215,6 +216,6 @@ class HistoryQueueConcurrencyTest {
 
         history.printPretty();
 
-        assertEquals(10, history.countInWindow());
+        assertEquals(10, history.getCountInWindow());
     }
 }
