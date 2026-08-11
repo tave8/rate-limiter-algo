@@ -253,6 +253,63 @@ It's on this intuition that a solution was created to simulate waiting without a
 Each history queue has its own concept of time and can be easily modified.
 
 
+MORE:
+
+    /**
+     * Get the now of the history queue. 
+     * This abstraction allows to fake what now means;
+     * We can fake waiting for events, without actually waiting.
+     * - When <code>cumulativeDelay = 0</code>, the now of this history queue
+     *   correspondes to the actual now (no faking).
+     * - When <code>cumulativeDelay > 0</code>, the now of this history queue
+     *   has been "fast forwarded" by <code>cumulativeDelay</code>
+     * 
+     * There's no logical difference between:
+     * 
+     * <pre>
+     * NORMAL WAIT
+     *  1. Add event
+     *  2. Wait 1 second
+     *  3. Add event (this is the current now)
+     * 
+     * ARTIFICIAL WAIT
+     *  1. Add event, Fake wait 1 second, Add event (this is the current now)
+     * </pre>
+     * 
+     * So long as the (artificial) now saved in the event is the (actual) now 
+     * plus the cumulative delay at this actual point in time. And this is 
+     * precisely the illusion we're creating.
+     * 
+     * @return
+     */
+    private long getNow() {
+        /**
+         * This single line is the whole idea behind fast forwarding time;
+         * The now of the history queue is simply the actual now plus 
+         * whatever cumulative delay at the actual now.
+         */
+        return util.getNow() + cumulativeDelay;
+    }
+
+MORE:
+
+    /**
+     * Add a delay to the cumulative delay of this history queue.
+     * This is the core mechanism of "faking the now" by fast forwarding
+     * time with the goal to mimic waiting. When adding an event, 
+     * the event is passed the now of the history queue, not the actual now.
+     * This decouples the "now of the history queue" from the "actual now",
+     * allowing each history queue to have its own concept of time.
+     * Both the actual now and the artificial now (history queue) 
+     * are abstracted away from the user.
+     * 
+     * The outcome: We can wait without actually waiting.
+     * 
+     * @param delay
+     * @return
+     */
+
+
 ### Implementation: Timeline Manager 
 
 The Rate Limiter implementation gives up determinism and loosens up events count accuracy, to gain in efficiency, speed and scalability.
@@ -431,3 +488,5 @@ Simply put, it is possible that very quick burts of requests not be detected, if
     // public long calcLastBuffer() {
     //     return calcBuffer(nTimelines-1);
     // }
+
+

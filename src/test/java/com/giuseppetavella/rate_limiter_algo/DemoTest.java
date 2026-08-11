@@ -13,5 +13,7 @@ public class DemoTest {
         RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window);
         RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window);
         
+        rateLimiter1.after(100);
+        
     }
 }

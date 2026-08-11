@@ -1,6 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
+import com.giuseppetavella.rate_limiter_algo.ClockModifier;
 import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import com.giuseppetavella.rate_limiter_algo.Clock;
 import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
@@ -39,7 +40,7 @@ public class HistoryQueue implements RateLimiter {
     private final long window;
     // Max items in period
     private final int maxEvents;
-    private final Clock util;
+    private final ClockModifier clock;
     private long cumulativeDelay; // 
     private int nextSeq;
     private long lastLatency;
@@ -49,8 +50,9 @@ public class HistoryQueue implements RateLimiter {
     private final Lock readQueueLock = rwQueueLock.readLock();
     private final Lock writeQueueLock = rwQueueLock.writeLock();
     
-    public HistoryQueue(int maxEvents, 
-                        long window) 
+    public HistoryQueue(int maxEvents,
+                        long window,
+                        ClockModifier clock) 
                             throws IllegalArgumentException 
     {
         if(window <= 0) {
@@ -62,7 +64,7 @@ public class HistoryQueue implements RateLimiter {
         this.window = window;
         this.maxEvents = maxEvents;
         this.queue = new LinkedList<>();
-        this.util = new Clock(); // This could be injected - ok for now
+        this.clock = clock;
         this.cumulativeDelay = 0;
         this.nextSeq = 0;
         this.lastLatency = 0;
@@ -72,7 +74,10 @@ public class HistoryQueue implements RateLimiter {
         // Schedule thread to clean time queue so it doesn't grow too big
         // cleaner.scheduleAtFixedRate(this::cleanQueue, 0, 1, TimeUnit.MICROSECONDS);
     }
-    
+
+    public HistoryQueue(int maxEvents, long window) {
+        this(maxEvents, window, new Clock());
+    }
 
     /**
      * The time point can be added only if 
@@ -94,7 +99,7 @@ public class HistoryQueue implements RateLimiter {
             // Note how we fake the "now": The now of the event  
             // is not the actual now, but the now plus the cumulative delay
             // at this point in time.
-            var candidate = new Event(nextSeq++, getNow(), eventName); 
+            var candidate = new Event(nextSeq++, clock.getNow(), eventName); 
             candidate.setThreadName(Thread.currentThread().getName()); // Set the name of the thread that added this event
             
             requireInvariantChronology(candidate);
@@ -155,26 +160,10 @@ public class HistoryQueue implements RateLimiter {
     }
 
 
-    /**
-     * Add a delay to the cumulative delay of this history queue.
-     * This is the core mechanism of "faking the now" by fast forwarding
-     * time with the goal to mimic waiting. When adding an event, 
-     * the event is passed the now of the history queue, not the actual now.
-     * This decouples the "now of the history queue" from the "actual now",
-     * allowing each history queue to have its own concept of time.
-     * Both the actual now and the artificial now (history queue) 
-     * are abstracted away from the user.
-     * 
-     * The outcome: We can wait without actually waiting.
-     * 
-     * @param delay
-     * @return
-     */
+
+    @Override
     public HistoryQueue after(long delay) {
-        if(delay < 0) {
-            throw new IllegalArgumentException("Delay must be >= 0.");
-        }
-        this.cumulativeDelay += delay;
+        clock.after(delay);
         return this;
     }
     
@@ -195,7 +184,7 @@ public class HistoryQueue implements RateLimiter {
             // the internal concept of time for each history queue,
             // we don't care whether the now is the actual now or
             // a fake now.
-            var windowStart = getNow() - window;
+            var windowStart = clock.getNow() - window;
             
             // Invariant "event was never happened after now",
             // so an event has never occurred in the future,
@@ -210,42 +199,7 @@ public class HistoryQueue implements RateLimiter {
         
     }
 
-    /**
-     * Get the now of the history queue. 
-     * This abstraction allows to fake what now means;
-     * We can fake waiting for events, without actually waiting.
-     * - When <code>cumulativeDelay = 0</code>, the now of this history queue
-     *   correspondes to the actual now (no faking).
-     * - When <code>cumulativeDelay > 0</code>, the now of this history queue
-     *   has been "fast forwarded" by <code>cumulativeDelay</code>
-     * 
-     * There's no logical difference between:
-     * 
-     * <pre>
-     * NORMAL WAIT
-     *  1. Add event
-     *  2. Wait 1 second
-     *  3. Add event (this is the current now)
-     * 
-     * ARTIFICIAL WAIT
-     *  1. Add event, Fake wait 1 second, Add event (this is the current now)
-     * </pre>
-     * 
-     * So long as the (artificial) now saved in the event is the (actual) now 
-     * plus the cumulative delay at this actual point in time. And this is 
-     * precisely the illusion we're creating.
-     * 
-     * @return
-     */
-    private long getNow() {
-        /**
-         * This single line is the whole idea behind fast forwarding time;
-         * The now of the history queue is simply the actual now plus 
-         * whatever cumulative delay at the actual now.
-         */
-        return util.getNow() + cumulativeDelay;
-    }
-    
+
     
     /**
      * How many events have been added in the time window
@@ -341,7 +295,7 @@ public class HistoryQueue implements RateLimiter {
         int i = queue.size()-1;
         while(i >= 0) {
             var ev = queue.get(i);
-            var deltaNow = getNow() - ev.getAt();
+            var deltaNow = clock.getNow() - ev.getAt();
             
             Event prevEv; long deltaPrev;
             if(i > 0) {

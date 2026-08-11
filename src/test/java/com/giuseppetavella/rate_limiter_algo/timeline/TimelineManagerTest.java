@@ -1,5 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
+import com.giuseppetavella.rate_limiter_algo.Clock;
+import com.giuseppetavella.rate_limiter_algo.ClockModifier;
 import com.giuseppetavella.rate_limiter_algo.ConcurrentModifier;
 import org.junit.jupiter.api.Test;
 
@@ -194,14 +196,23 @@ class TimelineManagerTest {
 
     @Test
     void test7() throws InterruptedException {
+
+        ClockModifier clock = new Clock();
+        
         EventFilterer fil = (t) -> {
-                if(t.isBeforeWindowThreshold(.8)) {  // Is < 80% of window?
-                    return t.isBeforeEventThreshold(.95); // If < 95% of max events, can add. Else reject.
-                }
-                return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
+            return true;
+                // if(t.isBeforeWindowThreshold(.8)) {  // Is < 80% of window?
+                //     return t.isBeforeEventThreshold(.95); // If < 95% of max events, can add. Else reject.
+                // }
+                // return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
         }; 
         
-        var manager = new TimelineManager(100_000, 1000, 3, fil).verbose(true);
+        var manager = new TimelineManager(100_000, 
+                                  1000, 
+                                3, 
+                                        fil, 
+                                        clock).verbose(true);
+        
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 5000;
@@ -210,6 +221,7 @@ class TimelineManagerTest {
             try {
                 for (int i = 0; i < 20; i++) {
                     manager.add();
+                    clock.after(1200);
                 }
             } catch (RuntimeException ex) {
                 System.out.println(ex.getMessage());
@@ -332,4 +344,5 @@ class TimelineManagerTest {
         Thread.sleep(Duration.ofSeconds(100));
 
     }
+    
 }

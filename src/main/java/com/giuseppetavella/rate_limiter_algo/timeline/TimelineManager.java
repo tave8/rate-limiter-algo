@@ -133,6 +133,12 @@ public class TimelineManager implements RateLimiter {
         return window;
     }
 
+    @Override
+    public RateLimiter after(long delay) {
+        clock.after(delay);
+        return this;
+    }
+
 
     public EventFilterer getEventFilterer() {
         return eventFilterer;
@@ -162,11 +168,7 @@ public class TimelineManager implements RateLimiter {
     public long calcBuffer(int factor) {
         return (window / nTimelines) * factor;
     }
-
-
-    public List<Timeline> getTimelines() {
-        return timelines;
-    }
+    
 
     /**
      * Set verbosity. 
