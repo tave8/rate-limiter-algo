@@ -227,14 +227,14 @@ public class TimelineManager implements RateLimiter {
         return () -> {
             try {
                 
-                var timeline = timelines.get(timelineIdx);
+                Timeline t = timelines.get(timelineIdx);
                 
                 if(verbose) {
-                    System.out.println("[timeline %d] resetting count... count before reset: %d".formatted(timelineIdx, timeline.getCountInWindow()));
+                    System.out.println("[timeline %d] resetting count... count before reset: %d".formatted(timelineIdx, t.getCountInWindow()));
                 }
                 
                 // Get the timeline associated to this thread
-                timeline.refresh();
+                t.wakeup();
 
             } catch (RuntimeException e) {
                 System.out.println("UNCAUGHT EXCEPTION IN SCHEDULER THREAD: " + e.getMessage());

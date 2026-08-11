@@ -81,6 +81,6 @@ import java.util.function.Function;
  * @author Giuseppe Tavella
  */
 @FunctionalInterface
-public interface EventFilterer extends Function<ReactiveTimeline, Boolean> {
-    
+public interface EventFilterer extends Function<Timeline, Boolean> {
+    Boolean apply(Timeline t);
 }

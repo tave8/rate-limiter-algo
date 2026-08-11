@@ -66,10 +66,8 @@ public abstract class Timeline {
      */
     public abstract Timeline add();
 
-    /**
-     * Refreshes the current window period and resets counter.
-     */
-    public abstract void refresh();
+
+    public abstract void wakeup();
 
     public void resetCountInWindow() {
         this.countInWindow.set(0);

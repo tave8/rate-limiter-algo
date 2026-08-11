@@ -12,13 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  */
 public class ReactiveTimeline extends Timeline {
-    /**
-     * 
-     * 
-     * @param maxEvents
-     * @param manager
-     * @param clock
-     */
+
     public ReactiveTimeline(int maxEvents,
                             TimelineManager manager,
                             Clock clock) 
@@ -26,15 +20,6 @@ public class ReactiveTimeline extends Timeline {
         super(maxEvents, manager, clock);
     }
     
-
-    /**
-     * Shortcut for applying user-defined filter on this timeline instance.
-     * 
-     * @return if true, event can be added. if false, event must be rejected.
-     */
-    protected boolean filterIn() {
-        return manager.getEventFilterer().apply(this);
-    }
 
     /**
      * Shortcut for applying user-defined filter on this timeline instance.
@@ -48,6 +33,7 @@ public class ReactiveTimeline extends Timeline {
      * @param nEvents
      * @return
      */
+    @Override
     public boolean canAdd(int nEvents) {
         return hasSpaceForEvents(nEvents) && filterIn();
     }
@@ -58,6 +44,7 @@ public class ReactiveTimeline extends Timeline {
      * 
      * @return
      */
+    @Override
     public ReactiveTimeline add() {
         if(!hasSpaceForEvents(1)) {
             throw new TooManyEventsInWindowException(maxEvents);
@@ -78,15 +65,24 @@ public class ReactiveTimeline extends Timeline {
         this.countInWindow.getAndIncrement();
         return this;
     }
-    
+
     /**
-     * Refresh the current period.
+     * Refreshes the current window period and resets counter.
      */
-    public void refresh() {
+    @Override
+    public void wakeup() {
         resetCountInWindow();
         this.windowStart.set(clock.getNow());
     }
-    
-    
+
+    /**
+     * Shortcut for applying user-defined filter on this timeline instance.
+     *
+     * @return if true, event can be added. if false, event must be rejected.
+     */
+    @Override
+    protected boolean filterIn() {
+        return manager.getEventFilterer().apply(this);
+    }
     
 }
