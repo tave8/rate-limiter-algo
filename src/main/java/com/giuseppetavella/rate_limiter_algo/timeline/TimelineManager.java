@@ -1,5 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
+import com.giuseppetavella.rate_limiter_algo.Clock;
+import com.giuseppetavella.rate_limiter_algo.ClockModifier;
 import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 
 import java.util.ArrayList;
@@ -8,20 +10,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A Rate Limiter implementation prioritizing efficiency and speed over absolute accuracy.
+ * A Rate Limiter implementation prioritizing efficiency 
+ * and speed over absolute accuracy.
+ * The core operation, {@code add()}, has constant space 
+ * and can be approximated to constant time complexity.
+ * The Timeline Manager's job is to schedule and run the timelines
+ * and to make the algorithm usable for the user.
  *
- * <p>Key characteristics:
- * <ul>
- *   <li>Memory usage does not scale linearly with request volume.</li>
- *   <li>Does not require scanning all historical events in the current window.</li>
- * </ul>
- *
- * <p><strong>Complexity Analysis:</strong>
- * <ul>
- *   <li><strong>Space:</strong> {@code O(1)} space complexity on all operations.</li>
- *   <li><strong>Time:</strong> for {@code add()} and {@code canAdd()}; {@code O(K)} where {@code K} is the 
- *       number of timelines, as each request increments counters across all timelines.</li>
- * </ul>
  */
 public class TimelineManager implements RateLimiter {
     private final int maxEvents;
@@ -30,6 +25,7 @@ public class TimelineManager implements RateLimiter {
     private final List<Timeline> timelines;
     private final EventFilterer eventFilterer;
     private boolean verbose;
+    private final ClockModifier clock;
     
     /**
      * Most custom.
@@ -42,11 +38,12 @@ public class TimelineManager implements RateLimiter {
     public TimelineManager(int maxEvents,
                            long window,
                            int nTimelines,
-                           EventFilterer fil) 
+                           EventFilterer fil,
+                           ClockModifier clock) 
                                throws IllegalArgumentException
     {
-        if(window <= 0) {
-            throw new IllegalArgumentException("Time window must be > 0.");
+        if(window < 100) {
+            throw new IllegalArgumentException("Time window must be >= 100.");
         }
         if(maxEvents < 0) {
             throw new IllegalArgumentException("Max events must be >= 0.");
@@ -54,12 +51,20 @@ public class TimelineManager implements RateLimiter {
         this.maxEvents = maxEvents;
         this.window = window;
         this.nTimelines = nTimelines;
-        this.timelines = new ArrayList<>();
+        this.clock = clock;
         this.eventFilterer = fil;
+        this.timelines = new ArrayList<>();
         this.verbose = false;
         init();
     }
 
+    public TimelineManager(int maxEvents, 
+                           long window, 
+                           int nTimelines, 
+                           EventFilterer eventFilterer) 
+    {
+        this(maxEvents, window, nTimelines, eventFilterer, new Clock());
+    }
 
     /**
      * No filter.
@@ -86,6 +91,7 @@ public class TimelineManager implements RateLimiter {
         this(maxEvents, window, 1);   
     }
 
+    
     
     /**
      * Add a new event.
@@ -132,81 +138,10 @@ public class TimelineManager implements RateLimiter {
         return eventFilterer;
     }
     
-    // public boolean canAdd() {
-    //     return canAdd(1);
-    // }
-
 
     /**
-     * Core idea of the Timeline implementation.
-     * By using the initial delay of the timeline as a permanent shift in the sense of time,
-     * each timeline effectively has its own start window.
-     *
-     * The initial delay of the timeline (and thus, of the scheduler) 
-     * is <code>(window / nTimelines) * i</code> and the reasoning behind it is as follows.
-     *
-     * Let Timeline 0 be the first timeline. Then Timeline 0 will start
-     * with an initial delay of 0. Let Timeline 1 be the second timeline.
-     * Then Timeline 1 will start within the window, but in after a fraction of time 
-     * has passed. This fraction of time is evenly distributed, so to speak.
-     * Concretely, this fraction of time is simply <code>window / nTimelines</code>
-     * so that the initial delay of each timeline is an exact fraction of the window.
-     * However, to make assigning the initial delay each timeline an automatic process,
-     * we need to schedule each timeline to start after the initial delay of the previous timeline.
-     * Which is the formula becomes <code>(window / nTimelines) * i</code>, where i is the i-th timeline.
-     *
-     * <br><br>
-     *
-     * Many timelines starting at different delays effectively increases precision.
-     * With this implementation, it's almost impossible to get an exact guarantee 
-     * that the given max number of events is respected. Instead, precision 
-     * is loosened up to allow for speed.
-     *
-     * Precision can be increased by increasing the number of timelines.
-     * However, because of the nature of threads, there's no exact guarantee 
-     * on timing. Because of the overall pragmatic nature of this implementation, 
-     * and because it gives up accuracy to gain in efficiency, optimal results
-     * should be assessed empirically. For example, by increasing the number of timelines,
-     * it's possible there are no increases in accuracy.
-     *
-     *
-     *
-     * <pre>
-     *    1 timeline: 
-     *
-     *      |--------------|--------------|--------------|--------------
-     *
-     *
-     *    2 timelines:
-     *
-     *      |--------------|--------------|--------------|--------------
-     *              |--------------|--------------|--------------|--------------
-     *
-     *
-     *     3 timelines:
-     *
-     *      |--------------|--------------|--------------|--------------
-     *            |--------------|--------------|--------------|--------------
-     *                 |--------------|--------------|--------------|--------------    
-     *
-     *     4 timelines:
-     *
-     *      |--------------|--------------|--------------|--------------
-     *          |--------------|--------------|--------------|--------------
-     *              |--------------|--------------|--------------|--------------   
-     *                  |--------------|--------------|--------------|--------------
-     *
-     *
-     *     5 timelines:
-     *
-     *      |--------------|--------------|--------------|--------------
-     *         |--------------|--------------|--------------|--------------
-     *            |--------------|--------------|--------------|--------------   
-     *               |--------------|--------------|--------------|--------------
-     *                  |--------------|--------------|--------------|--------------    
-     *
-     * </pre>
-     *
+     * 
+     * 
      * @param timelineIdx
      * @return
      */
@@ -215,23 +150,13 @@ public class TimelineManager implements RateLimiter {
     }
 
     /**
-     * Calculate the time buffer, which is simply the number of milliseconds 
-     * representing some amount of time that is proportional to the window.
-     *
-     * <br>
-     * It's used in a formula like <code>windowStart + lastBuffer</code>
-     * to effectively locate the start of the last buffer in the current period.
-     *
-     * <br><br>
-     * Some useful cases:
-     * <ul>
-     *     <li>A factor of 0 returns 0.</li>
-     *     <li>A factor of <code>nTimelines-1</code> is used to locate 
-     *          the start of the last buffer in the current period.  
-     *     <li>A factor of <code>nTimelines</code> is equivalent to end of the window.</li>
-     * </ul>
-     *
-     *
+     * Calculate the time buffer, which is simply a fraction of the window.
+     * A more appropriate name could include "proportional padding".
+     * For example, given a window of 100ms, 3 timelines and a factor of 2,
+     * the buffer will be {@code (1000ms / 3) * 2 = 666ms}.
+     * 
+     * 
+     * @param factor
      * @return
      */
     public long calcBuffer(int factor) {
@@ -239,31 +164,9 @@ public class TimelineManager implements RateLimiter {
     }
 
 
-    /**
-     * Calculate the last time buffer of the window.
-     * This is useful for knowing whether we are "towards the end"
-     * of a window.
-     *
-     * <pre>
-     *     ------------------------------------------------------> time
-     *
-     *                 |--- buffer start
-     *    window start |           
-     *     |           v
-     *     v           *****          *****          *****
-     *     |--------------|--------------|--------------|     timeline
-     *
-     *     |----------|
-     *      last buffer 
-     *
-     * </pre>
-     *
-     * @return a number, in milliseconds, that indicates the buffer (almost like a left padding)
-     *          that can be added to the window start, to get the buffer start
-     */
-    // public long calcLastBuffer() {
-    //     return calcBuffer(nTimelines-1);
-    // }
+    public List<Timeline> getTimelines() {
+        return timelines;
+    }
 
     /**
      * Set verbosity. 
@@ -309,7 +212,7 @@ public class TimelineManager implements RateLimiter {
     private void init() {
         // Build timelines
         for (int i = 0; i < nTimelines; i++) {
-            timelines.add(new Timeline(maxEvents, this));
+            timelines.add(new Timeline(maxEvents, this, clock));
         }
 
         // Schedule as many threads as timelines
@@ -327,6 +230,5 @@ public class TimelineManager implements RateLimiter {
         }
     }
 
-
-
+    
 }

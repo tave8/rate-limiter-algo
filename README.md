@@ -269,3 +269,165 @@ Simply put, it is possible that very quick burts of requests not be detected, if
 
 
 
+
+#### The initial delay and time buffer
+
+    /**
+     * Calculate the time buffer, which is simply the number of milliseconds 
+     * representing some amount of time that is proportional to the window.
+     *
+     * <br>
+     * It's used in a formula like <code>windowStart + lastBuffer</code>
+     * to effectively locate the start of the last buffer in the current period.
+     *
+     * <br><br>
+     * Some useful cases:
+     * <ul>
+     *     <li>A factor of 0 returns 0.</li>
+     *     <li>A factor of <code>nTimelines-1</code> is used to locate 
+     *          the start of the last buffer in the current period.  
+     *     <li>A factor of <code>nTimelines</code> is equivalent to end of the window.</li>
+     * </ul>
+     *
+     *
+     * @return
+     */
+
+
+
+
+    /**
+     * Core idea of the Timeline implementation.
+     * By using the initial delay of the timeline as a permanent shift in the sense of time,
+     * each timeline effectively has its own start window.
+     *
+     * The initial delay of the timeline (and thus, of the scheduler) 
+     * is <code>(window / nTimelines) * i</code> and the reasoning behind it is as follows.
+     *
+     * Let Timeline 0 be the first timeline. Then Timeline 0 will start
+     * with an initial delay of 0. Let Timeline 1 be the second timeline.
+     * Then Timeline 1 will start within the window, but in after a fraction of time 
+     * has passed. This fraction of time is evenly distributed, so to speak.
+     * Concretely, this fraction of time is simply <code>window / nTimelines</code>
+     * so that the initial delay of each timeline is an exact fraction of the window.
+     * However, to make assigning the initial delay each timeline an automatic process,
+     * we need to schedule each timeline to start after the initial delay of the previous timeline.
+     * Which is the formula becomes <code>(window / nTimelines) * i</code>, where i is the i-th timeline.
+     *
+     * <br><br>
+     *
+     * Many timelines starting at different delays effectively increases precision.
+     * With this implementation, it's almost impossible to get an exact guarantee 
+     * that the given max number of events is respected. Instead, precision 
+     * is loosened up to allow for speed.
+     *
+     * Precision can be increased by increasing the number of timelines.
+     * However, because of the nature of threads, there's no exact guarantee 
+     * on timing. Because of the overall pragmatic nature of this implementation, 
+     * and because it gives up accuracy to gain in efficiency, optimal results
+     * should be assessed empirically. For example, by increasing the number of timelines,
+     * it's possible there are no increases in accuracy.
+     *
+     *
+     *
+     * <pre>
+     *    1 timeline: 
+     *
+     *      |--------------|--------------|--------------|--------------
+     *
+     *
+     *    2 timelines:
+     *
+     *      |--------------|--------------|--------------|--------------
+     *              |--------------|--------------|--------------|--------------
+     *
+     *
+     *     3 timelines:
+     *
+     *      |--------------|--------------|--------------|--------------
+     *            |--------------|--------------|--------------|--------------
+     *                 |--------------|--------------|--------------|--------------    
+     *
+     *     4 timelines:
+     *
+     *      |--------------|--------------|--------------|--------------
+     *          |--------------|--------------|--------------|--------------
+     *              |--------------|--------------|--------------|--------------   
+     *                  |--------------|--------------|--------------|--------------
+     *
+     *
+     *     5 timelines:
+     *
+     *      |--------------|--------------|--------------|--------------
+     *         |--------------|--------------|--------------|--------------
+     *            |--------------|--------------|--------------|--------------   
+     *               |--------------|--------------|--------------|--------------
+     *                  |--------------|--------------|--------------|--------------    
+     *
+     * </pre>
+     *
+     * @param timelineIdx
+     * @return
+     */
+
+
+
+
+    /**
+     * Is this the last time buffer in the window?
+     *
+     * Here's an example with 3 Timelines. The asterisks represent the 
+     * time in the last buffer in each window in each timeline.
+     *
+     * <pre>
+     *     ------------------------------------------------------> time
+     *
+     *                *****          *****          *****
+     *     |--------------|--------------|--------------|
+     *                     *****          *****          *****
+     *          |--------------|--------------|--------------|
+     *                          *****          *****          *****
+     *               |--------------|--------------|--------------|
+     * </pre>
+     *
+     * This can be used to create custom rate limiting logic such as: 
+     * "If a new event is trying to be added in the last buffer period, 
+     * and 95% of events have already been added from the start of this period
+     * (in percentage to the max events allowed in the window), then disallow insertion
+     * of new events before you even get to the exact max events (we assume you'll get there, 
+     * so preventive back-off)".
+     *
+     * @return
+     */
+    // public boolean isThisLastBuffer() {
+    //     var startLastBuffer = windowStart + manager.calcLastBuffer();
+    //     return getNow() >= startLastBuffer;
+    // }
+
+
+
+    /**
+     * Calculate the last time buffer of the window.
+     * This is useful for knowing whether we are "towards the end"
+     * of a window.
+     *
+     * <pre>
+     *     ------------------------------------------------------> time
+     *
+     *                 |--- buffer start
+     *    window start |           
+     *     |           v
+     *     v           *****          *****          *****
+     *     |--------------|--------------|--------------|     timeline
+     *
+     *     |----------|
+     *      last buffer 
+     *
+     * </pre>
+     *
+     * @return a number, in milliseconds, that indicates the buffer (almost like a left padding)
+     *          that can be added to the window start, to get the buffer start
+     */
+    // public long calcLastBuffer() {
+    //     return calcBuffer(nTimelines-1);
+    // }

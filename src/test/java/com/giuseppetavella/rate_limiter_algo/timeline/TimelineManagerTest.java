@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 class TimelineManagerTest {
     @Test
     void test0() throws InterruptedException {
-        var manager = new TimelineManager(1000, 1000, 5);
+        var manager = new TimelineManager(1000, 1000, 5).verbose(true);
         var concurrentModifier = new ConcurrentModifier();
 
         // timeline manager - get max peak for each instance. at add operation.
@@ -194,7 +194,14 @@ class TimelineManagerTest {
 
     @Test
     void test7() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 3);
+        EventFilterer fil = (t) -> {
+                if(t.isBeforeWindowThreshold(.8)) {  // Is < 80% of window?
+                    return t.isBeforeEventThreshold(.95); // If < 95% of max events, can add. Else reject.
+                }
+                return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
+        }; 
+        
+        var manager = new TimelineManager(100_000, 1000, 3, fil).verbose(true);
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 5000;
