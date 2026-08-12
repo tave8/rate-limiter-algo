@@ -1,6 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
 import com.giuseppetavella.rate_limiter_algo.Clock;
+import com.giuseppetavella.rate_limiter_algo.ClockImpl;
 import com.giuseppetavella.rate_limiter_algo.RejectionReason;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -61,6 +62,7 @@ public abstract class Timeline {
     protected final long window;
     protected final EventFilterer eventFilterer;
     protected final Clock clock;
+    protected final byte id;
     
     protected final AtomicLong countInWindow;
     protected final AtomicLong windowStart;
@@ -76,16 +78,31 @@ public abstract class Timeline {
      */
     public Timeline(int maxEvents, 
                     long window,
-                    EventFilterer eventFilterer, 
-                    Clock clock) 
+                    Clock clock,
+                    EventFilterer eventFilterer,
+                    byte id) 
     {
+        if(window < 100) {
+            throw new IllegalArgumentException("Time window must be >= 100.");
+        }
+        if(maxEvents < 0) {
+            throw new IllegalArgumentException("Max events must be >= 0.");
+        }
+        if(clock == null) {
+            throw new IllegalArgumentException("clock cannot be null in a timeline.");
+        }
+        if(eventFilterer == null) {
+            throw new IllegalArgumentException("eventFilterer cannot be null in a timeline.");
+        }
         this.maxEvents = maxEvents;
         this.window = window;
+        this.clock = clock;
         this.eventFilterer = eventFilterer;
         this.countInWindow = new AtomicLong(0);
         this.windowStart = new AtomicLong(clock.getNow());
-        this.clock = clock;
+        this.id = id;
     }
+
 
     /**
      * Checks if {@code nEvents} can be added to this timeline.
@@ -266,4 +283,7 @@ public abstract class Timeline {
         this.rejectionReason = reason;
     }
 
+    public byte getId() {
+        return id;
+    }
 }

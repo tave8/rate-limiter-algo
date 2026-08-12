@@ -11,12 +11,15 @@ import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
  */
 public class ReactiveTimeline extends Timeline {
 
-    public ReactiveTimeline(int maxEvents,
-                            long window,
-                            EventFilterer eventFilterer,
-                            Clock clock) 
+    public ReactiveTimeline(Builder builder) 
     {
-        super(maxEvents, window, eventFilterer, clock);
+        super(
+                builder.maxEvents, 
+                builder.window, 
+                builder.clock,
+                builder.eventFilterer,
+                builder.id
+        );
     }
     
 
@@ -84,6 +87,46 @@ public class ReactiveTimeline extends Timeline {
     @Override
     protected boolean filterIn() {
         return eventFilterer.apply(this);
+    }
+    
+    
+    public static class Builder {
+        private int maxEvents;
+        private long window;
+        private Clock clock;
+        private EventFilterer eventFilterer;
+        private byte id;
+        
+        public Builder(int maxEvents, long window, byte id) {
+            this.maxEvents = maxEvents;
+            this.window = window;
+            this.id = id;
+        }
+        
+        public static ReactiveTimeline fromManager(TimelineManager manager) {
+            var builder = new Builder(
+                    manager.getMaxEvents(), 
+                    manager.getWindow(),
+                    manager.nextTimelineSeq()
+            );
+            builder.clock(manager.getClock());
+            builder.eventFilterer(manager.getEventFilterer());
+            return new ReactiveTimeline(builder);
+        }
+        
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+        
+        public Builder eventFilterer(EventFilterer eventFilterer) {
+            this.eventFilterer = eventFilterer;
+            return this;
+        }
+        
+        public ReactiveTimeline build() {
+            return new ReactiveTimeline(this);
+        }
     }
     
 }

@@ -58,7 +58,11 @@ public abstract class RateLimiter {
         this.clock.after(delay);
         return this;
     }
-    
+
+    public Clock getClock() {
+        return clock;
+    }
+
     public RejectionReason getRejectionReason() {
         return rejectionReason;
     }

@@ -1,6 +1,8 @@
 package com.giuseppetavella.rate_limiter_algo;
 
 import com.giuseppetavella.rate_limiter_algo.history_queue.HistoryQueue;
+import com.giuseppetavella.rate_limiter_algo.timeline.ReactiveQuietTimeline;
+import com.giuseppetavella.rate_limiter_algo.timeline.ReactiveTimeline;
 import com.giuseppetavella.rate_limiter_algo.timeline.TimelineManager;
 import org.junit.jupiter.api.Test;
 
@@ -14,8 +16,12 @@ public class DemoTest {
         Clock clock1 = new ClockImpl();
         Clock clock2 = new ClockImpl();         
         
-        RateLimiter rateLimiter1 = new TimelineManager.Builder(maxEvents, window, 1)
+        TimelineManager rateLimiter1 = new TimelineManager.Builder(maxEvents, window, 1)
                 .build();
+        
+        rateLimiter1.setTimelineSupplier(() -> ReactiveTimeline.Builder.fromManager(rateLimiter1));
+        
+        rateLimiter1.start();
         
         // RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window, clock2);
         
