@@ -1,10 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
-import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
-import com.giuseppetavella.rate_limiter_algo.ClockImpl;
-import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
+import com.giuseppetavella.rate_limiter_algo.*;
 
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
@@ -35,13 +32,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  * @author Giuseppe Tavella
  */
-public class HistoryQueue implements RateLimiter {
+public class HistoryQueue extends RateLimiter {
     private final LinkedList<Event> queue;
-    private final long window;
-    // Max items in period
-    private final int maxEvents;
-    private final Clock clock;
-    private long cumulativeDelay; // 
     private int nextSeq;
     private long lastLatency;
     // private int manualCountInWindow;
@@ -55,17 +47,9 @@ public class HistoryQueue implements RateLimiter {
                         Clock clock) 
                             throws IllegalArgumentException 
     {
-        if(window <= 0) {
-            throw new IllegalArgumentException("Time window must be > 0.");
-        }
-        if(maxEvents < 0) {
-            throw new IllegalArgumentException("Max events must be >= 0.");
-        }
-        this.window = window;
-        this.maxEvents = maxEvents;
+        super(maxEvents, window, clock);
+        
         this.queue = new LinkedList<>();
-        this.clock = clock;
-        this.cumulativeDelay = 0;
         this.nextSeq = 0;
         this.lastLatency = 0;
         // this.manualCountInWindow = 0;
@@ -84,7 +68,7 @@ public class HistoryQueue implements RateLimiter {
      * the <code>maxItemsInPeriod</code> < <code>period</code>
      *
      */
-    public HistoryQueue add(String eventName)
+    public boolean add(String eventName)
                               throws TooManyEventsInWindowException
     {
         writeQueueLock.lock();
@@ -92,6 +76,7 @@ public class HistoryQueue implements RateLimiter {
         try {
 
             if(!canAdd()) {
+                setRejectionReason(RejectionReason.WOULD_OVERFLOW);
                 throw new TooManyEventsInWindowException(maxEvents);
             }
 
@@ -105,7 +90,7 @@ public class HistoryQueue implements RateLimiter {
             requireInvariantChronology(candidate);
             queue.add(candidate);
             
-            return this;
+            return true;
 
         } finally {
             // this.lastLatency =  
@@ -113,14 +98,14 @@ public class HistoryQueue implements RateLimiter {
         }
     }
     
-    public HistoryQueue add(int eventName)
+    public boolean add(int eventName)
                                 throws TooManyEventsInWindowException
     {
         return add(eventName+"");
     }
-    
+
     @Override
-    public HistoryQueue add()
+    public boolean add()
                             throws TooManyEventsInWindowException 
     {
         return add("<no name>");
@@ -142,29 +127,11 @@ public class HistoryQueue implements RateLimiter {
             // number of events in this time window to the 
             // N desired number of new events, 
             // is <= the number of max events
-            return countInWindow() + nEvents <= maxEvents;
+            return getCountInWindow() + nEvents <= maxEvents;
 
         } finally {
             readQueueLock.unlock();
         }
-    }
-
-    /**
-     * Can I add 1 event in this time window?
-     *
-     * @return
-     */
-    @Override
-    public boolean canAdd() {
-        return canAdd(1);
-    }
-
-
-
-    @Override
-    public HistoryQueue after(long delay) {
-        clock.after(delay);
-        return this;
     }
     
     
@@ -207,7 +174,8 @@ public class HistoryQueue implements RateLimiter {
      * 
      * @return
      */
-    public int countInWindow() {
+    @Override
+    public long getCountInWindow() {
         
         readQueueLock.lock();
         
@@ -324,23 +292,7 @@ public class HistoryQueue implements RateLimiter {
                             +"th = thread name \n");
     }
 
-
-
-    @Override
-    public int getMaxEvents() {
-        return maxEvents;
-    }
-
-    @Override
-    public long getWindow() {
-        return window;
-    }
-
-    @Override
-    public long getCountInWindow() {
-        return countInWindow();
-    }
-
+    
 
     @Override
     public String toString() {

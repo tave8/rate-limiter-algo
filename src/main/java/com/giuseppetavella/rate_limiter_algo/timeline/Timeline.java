@@ -1,7 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
 import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
+import com.giuseppetavella.rate_limiter_algo.RejectionReason;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -65,6 +65,7 @@ public abstract class Timeline {
     protected final AtomicLong countInWindow;
     protected final AtomicLong windowStart;
 
+    private RejectionReason rejectionReason;
     /**
      * Template for timelines.
      * 
@@ -111,7 +112,7 @@ public abstract class Timeline {
      * 
      * @return this timeline instance
      */
-    public abstract Timeline add();
+    public abstract boolean add();
 
     /**
      * Wakes up this timeline.
@@ -156,7 +157,7 @@ public abstract class Timeline {
      * @param nEvents number of events to check
      * @return true if {@code nEvents} can be added, false otherwise
      */
-    protected boolean hasSpaceForEvents(int nEvents) {
+    public boolean hasSpaceForEvents(int nEvents) {
         return countInWindow.get() + nEvents <= maxEvents;
     }
 
@@ -166,7 +167,7 @@ public abstract class Timeline {
      *
      * @return true if 1 can be added, false otherwise
      */
-    protected boolean hasSpaceForEvent() {
+    public boolean hasSpaceForEvent() {
         return hasSpaceForEvents(1);
     }
 
@@ -178,7 +179,7 @@ public abstract class Timeline {
      *          and thus cannot add a new event, false if there's space
      *          for a new event
      */
-    protected boolean wouldOverflow() {
+    public boolean wouldOverflow() {
         return !hasSpaceForEvent();
     }
 
@@ -248,6 +249,21 @@ public abstract class Timeline {
     public long getCountInWindow() {
         return countInWindow.get();
     }
-    
-    
+
+    /**
+     * 
+     * @return
+     */
+    public RejectionReason getRejectionReason() {
+        return rejectionReason;
+    }
+
+    /**
+     * 
+     * @param reason
+     */
+    protected void setRejectionReason(RejectionReason reason) {
+        this.rejectionReason = reason;
+    }
+
 }

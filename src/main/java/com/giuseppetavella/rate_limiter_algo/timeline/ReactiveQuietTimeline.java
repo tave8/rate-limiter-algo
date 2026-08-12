@@ -2,19 +2,19 @@ package com.giuseppetavella.rate_limiter_algo.timeline;
 
 import com.giuseppetavella.rate_limiter_algo.Clock;
 import com.giuseppetavella.rate_limiter_algo.RejectionReason;
-import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 
 /**
- * A Reactive Timeline provides maximum accuracy.
+ * A Reactive Quiet Timeline provides maximum accuracy
+ * as well as communicating errors with codes instead of throwing exceptions.
  * 
  * 
  */
-public class ReactiveTimeline extends Timeline {
+public class ReactiveQuietTimeline extends Timeline {
 
-    public ReactiveTimeline(int maxEvents,
-                            long window,
-                            EventFilterer eventFilterer,
-                            Clock clock) 
+    public ReactiveQuietTimeline(int maxEvents,
+                                 long window,
+                                 EventFilterer eventFilterer,
+                                 Clock clock) 
     {
         super(maxEvents, window, eventFilterer, clock);
     }
@@ -47,20 +47,12 @@ public class ReactiveTimeline extends Timeline {
     public boolean add() {
         if(wouldOverflow()) {
             setRejectionReason(RejectionReason.WOULD_OVERFLOW);
-            throw new TooManyEventsInWindowException(maxEvents);
+            return false;
         }
         
-        if(filterOut()) {
+        if(filterOut()) { 
             setRejectionReason(RejectionReason.FILTERED_OUT);
-            throw new EventFilteredOutException(
-                    maxEvents, 
-                    countInWindow.get(), 
-                    "Now: %d, Window start: %d, Diff: %d".formatted(
-                            clock.getNow(), 
-                            windowStart.get(), 
-                            clock.getNow()-windowStart.get()
-                    )
-            );
+            return false;
         }
         
         this.countInWindow.getAndIncrement();
@@ -85,5 +77,6 @@ public class ReactiveTimeline extends Timeline {
     protected boolean filterIn() {
         return eventFilterer.apply(this);
     }
-    
+
+
 }

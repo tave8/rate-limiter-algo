@@ -23,7 +23,7 @@ public class TimelineManagerOverflowTest {
             this.requestAttemptNumber = requestAttemptNumber;
             this.cumulativeOverflowCount = cumulativeOverflowCount;
         }
-    }
+    } 
 
     @Test
     void testAndReportExactOverflowMetrics() throws InterruptedException {
