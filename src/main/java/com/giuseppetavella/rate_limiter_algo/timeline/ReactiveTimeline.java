@@ -103,7 +103,7 @@ public class ReactiveTimeline extends Timeline {
             this.id = id;
         }
         
-        public static ReactiveTimeline fromManager(TimelineManager manager) {
+        public static ReactiveTimeline newFromManager(TimelineManager manager) {
             var builder = new Builder(
                     manager.getMaxEvents(), 
                     manager.getWindow(),

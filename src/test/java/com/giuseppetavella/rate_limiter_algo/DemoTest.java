@@ -19,7 +19,7 @@ public class DemoTest {
         TimelineManager rateLimiter1 = new TimelineManager.Builder(maxEvents, window, 1)
                 .build();
         
-        rateLimiter1.setTimelineSupplier(() -> ReactiveTimeline.Builder.fromManager(rateLimiter1));
+        rateLimiter1.setTimelineSupplier(() -> ReactiveTimeline.Builder.newFromManager(rateLimiter1));
         
         rateLimiter1.start();
         

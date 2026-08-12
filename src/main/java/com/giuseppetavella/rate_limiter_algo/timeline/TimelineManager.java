@@ -58,7 +58,7 @@ public class TimelineManager extends RateLimiter {
     
     
     private Timeline defaultTimelineSupplier() {
-        return ReactiveTimeline.Builder.fromManager(this);
+        return Timelines.newReactiveQuietFrom(this);
     }
     
     public void setTimelineSupplier(Supplier<Timeline> supplier) {
@@ -110,8 +110,11 @@ public class TimelineManager extends RateLimiter {
     @Override
     public boolean add() {
         // Add event to all timelines
-        for (var t : timelines) {
+        for (byte i = 0; i < timelines.size(); i++) {
+            Timeline t = timelines.get(i);
+            // Try adding event
             if( !t.add() ) {
+                decreaseEventCountUntil(i);
                 // The rejection reason specific to the timeline
                 // is passed to the manager
                 setRejectionReason(t.getRejectionReason());
@@ -119,6 +122,18 @@ public class TimelineManager extends RateLimiter {
             }
         }       
         return true;
+    }
+
+    /**
+     * Decrease event count of all timelines 
+     * from 0 until {@code untilIdx} exclusive.
+     * 
+     * @param untilIdx
+     */
+    private void decreaseEventCountUntil(byte untilIdx) {
+        for (byte i = 0; i < untilIdx; i++) {
+            timelines.get(i).decrementEventCount();
+        }
     }
     
     @Override
@@ -175,12 +190,38 @@ public class TimelineManager extends RateLimiter {
      * For example, given a window of 100ms, 3 timelines and a factor of 2,
      * the buffer will be {@code (1000ms / 3) * 2 = 666ms}.
      * 
+     * <br><br>
+     * Multiply first, then divide. Before it was "(window / nTimelines) * factor",
+     * but this leaked / was more imprecise, because multiplying
+     * after the impliciting rounding to integer also multiplied
+     * the leakage. Whereas multiplying first and then dividing
+     * implies that rounding to integer happens at the last stage,
+     * so accuracy is maximized.
+     * 
+     * <br><br> 
+     * 
+     * Take this example where both operations are equivalent. 
+     * The result is 233.333 but only the second result is more accurate.
+     * <pre>{@code 
+     *         int x = 100;
+     *         int y = 3;
+     *         int factor = 7;
+     *
+     *         long res1 = (x / y) * factor;
+     *         long res2 = (x * factor) / y;
+     *
+     *         System.out.println(res1);
+     *         System.out.println(res2);
+     * 
+     * }
+     * </pre>
      * 
      * @param factor
      * @return
      */
     public long calcBuffer(int factor) {
-        return (window / nTimelines) * factor;
+
+        return (window * factor) / nTimelines;
     }
     
     

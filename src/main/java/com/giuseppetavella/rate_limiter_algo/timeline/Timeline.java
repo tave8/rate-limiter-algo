@@ -103,6 +103,10 @@ public abstract class Timeline {
         this.id = id;
     }
 
+    public void decrementEventCount() {
+        this.countInWindow.decrementAndGet();
+    }
+
 
     /**
      * Checks if {@code nEvents} can be added to this timeline.

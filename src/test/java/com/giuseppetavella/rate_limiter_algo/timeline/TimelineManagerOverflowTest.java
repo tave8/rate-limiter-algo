@@ -45,7 +45,7 @@ public class TimelineManagerOverflowTest {
         TimelineManager manager = new TimelineManager.Builder(maxEventsAllowed, windowMs, nTimelines)
                 .eventFilterer(fil).build();
         
-        manager.setTimelineSupplier(() -> ReactiveQuietTimeline.Builder.fromManager(manager));
+        manager.setTimelineSupplier(() -> ReactiveQuietTimeline.Builder.newFromManager(manager));
 
         manager.start();
         
