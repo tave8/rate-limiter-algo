@@ -15,7 +15,7 @@ class TimelineManagerChaoticTest {
         int nTimelines = 3;
 
 
-        EventFilterer fil = (t) -> {
+        EventFilterer fil = (t) -> { 
             if(t.isBeforeWindowThreshold(.8)) {
                 return t.isBeforeEventThreshold(.95);
             }

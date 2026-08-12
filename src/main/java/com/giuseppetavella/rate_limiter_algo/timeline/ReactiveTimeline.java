@@ -86,7 +86,7 @@ public class ReactiveTimeline extends Timeline {
      */
     @Override
     protected boolean filterIn() {
-        return eventFilterer.apply(this);
+        return eventFilterer.filter(this);
     }
     
     

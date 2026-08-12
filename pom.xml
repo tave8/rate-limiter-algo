@@ -19,7 +19,17 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+
 	<dependencies>
+		
+		<!-- Source: https://mvnrepository.com/artifact/org.openjdk.jol/jol-core -->
+		<dependency>
+			<groupId>org.openjdk.jol</groupId>
+			<artifactId>jol-core</artifactId>
+			<version>0.17</version>
+			<scope>test</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>

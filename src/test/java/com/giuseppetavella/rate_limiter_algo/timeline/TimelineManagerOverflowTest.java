@@ -1,6 +1,5 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.history_queue.HistoryQueue;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -23,7 +22,7 @@ public class TimelineManagerOverflowTest {
             this.requestAttemptNumber = requestAttemptNumber;
             this.cumulativeOverflowCount = cumulativeOverflowCount;
         }
-    } 
+    }
 
     @Test
     void testAndReportExactOverflowMetrics() throws InterruptedException {
@@ -37,21 +36,20 @@ public class TimelineManagerOverflowTest {
         // =================================================================
 
         EventFilterer fil = (t) -> {
-            if (t.isBeforeWindowThreshold(.8)) {
-                return t.isBeforeEventThreshold(.95);
-            }
-            return t.isBeforeEventThreshold(.97);
+            // if (t.isBeforeWindowThreshold(.8)) {
+            //     return t.isBeforeEventThreshold(.95);
+            // }
+            return t.isBeforeEventThreshold(.63);
         };
 
-        // var manager = new TimelineManager(maxEventsAllowed, windowMs, nTimelines, fil);
-        TimelineManager manager = new TimelineManager.Builder(maxEventsAllowed, windowMs, 3).eventFilterer(fil).build();
-
-        manager.setTimelineSupplier(() -> ReactiveTimeline.Builder.fromManager(manager));
+        TimelineManager manager = new TimelineManager.Builder(maxEventsAllowed, windowMs, nTimelines)
+                .eventFilterer(fil).build();
+        
+        manager.setTimelineSupplier(() -> ReactiveQuietTimeline.Builder.fromManager(manager));
 
         manager.start();
         
-        
-        
+
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
@@ -72,13 +70,15 @@ public class TimelineManagerOverflowTest {
                     startGate.await(); // Synchronize thread start
                     while (running.get()) {
                         long attemptNum = totalAttempted.incrementAndGet();
-                        try {
-                            manager.add();
+                        boolean accepted = manager.add();
+
+                        if (accepted) {
                             totalAccepted.incrementAndGet();
-                        } catch (RuntimeException ex) {
+                        } else {
                             long rejectNum = totalRejected.incrementAndGet();
                             // Capture IF, WHEN, and BY HOW MUCH
-                            overflowLog.add(new OverflowRecord(Instant.now(), attemptNum, rejectNum));
+                            // NOTE: if you comment this logging, performance will massively increase 
+                            // overflowLog.add(new OverflowRecord(Instant.now(), attemptNum, rejectNum));
                         }
                     }
                 } catch (InterruptedException ignored) {
@@ -114,6 +114,7 @@ public class TimelineManagerOverflowTest {
         System.out.println("--------------------------------------------------");
         System.out.printf("Total Requests Sent    : %,d%n", totalAttempted.get());
         System.out.printf("Total Accepted         : %,d%n", totalAccepted.get());
+        System.out.printf("Total Rejected         : %,d%n", totalRejected.get());
         System.out.println("--------------------------------------------------");
         System.out.printf("1. DID IT OVERFLOW?    : %s%n", didOverflow ? "YES" : "NO");
         System.out.printf("2. OVERFLOW AMOUNT     : %,d rejected events%n", totalOverflowAmount);
@@ -127,7 +128,7 @@ public class TimelineManagerOverflowTest {
 
         // Basic sanity check assertions
         assertTrue(totalAttempted.get() > 0, "No requests were executed.");
-        assertEquals(totalAttempted.get(), totalAccepted.get() + totalRejected.get(), 
-            "Total attempted must equal Accepted + Rejected.");
+        assertEquals(totalAttempted.get(), totalAccepted.get() + totalRejected.get(),
+                "Total attempted must equal Accepted + Rejected.");
     }
 }
