@@ -3,7 +3,7 @@ package com.giuseppetavella.rate_limiter_algo;
 public abstract class RateLimiter {
     protected final int maxEvents;
     protected final long window;
-    protected final Clock clock;
+    protected Clock clock;
     
     protected RejectionReason rejectionReason;
 
@@ -20,9 +20,9 @@ public abstract class RateLimiter {
         }
         this.maxEvents = maxEvents;
         this.window = window;
-        this.clock = clock;
+        this.clock = clock == null ? defaultClockSupplier() : clock;
     }
-    
+
     public abstract boolean canAdd(int nEvents);
     
     public boolean canAdd() {
@@ -66,4 +66,9 @@ public abstract class RateLimiter {
     protected void setRejectionReason(RejectionReason reason) {
         this.rejectionReason = reason;
     }
+
+    protected Clock defaultClockSupplier() {
+        return new ClockImpl();
+    }
+    
 }

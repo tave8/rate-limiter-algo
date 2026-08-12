@@ -22,7 +22,7 @@ class TimelineManagerChaoticTest {
             return t.isBeforeEventThreshold(.97);
         };
 
-        var manager = new TimelineManager(maxEvents, window, nTimelines, fil).verbose(true);
+        var manager = new TimelineManager.Builder(maxEvents, window, nTimelines).eventFilterer(fil).verbose(true).build();
 
         int poolSize = 16;
         int burstThreads = 8;

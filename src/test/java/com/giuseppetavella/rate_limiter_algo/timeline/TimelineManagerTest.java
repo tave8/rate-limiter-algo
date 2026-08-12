@@ -13,7 +13,10 @@ import java.util.concurrent.TimeUnit;
 class TimelineManagerTest {
     @Test
     void test0() throws InterruptedException {
-        var manager = new TimelineManager(1000, 1000, 5).verbose(true);
+        var manager = new TimelineManager.Builder(1000, 1000, 5)
+                .verbose(true)
+                .build();
+        
         var concurrentModifier = new ConcurrentModifier();
 
         // timeline manager - get max peak for each instance. at add operation.
@@ -39,7 +42,7 @@ class TimelineManagerTest {
     
     @Test
     void test1() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 5);
+        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
         var concurrentModifier = new ConcurrentModifier();
         
         // timeline manager - get max peak for each instance. at add operation.
@@ -65,7 +68,7 @@ class TimelineManagerTest {
 
     @Test
     void test2() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 5);
+        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 100;
@@ -89,7 +92,7 @@ class TimelineManagerTest {
 
     @Test
     void test3() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 5);
+        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 10;
@@ -112,7 +115,7 @@ class TimelineManagerTest {
 
     @Test
     void test4() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 5);
+        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 100;
@@ -139,7 +142,7 @@ class TimelineManagerTest {
 
     @Test
     void test5() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 5);
+        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 1000;
@@ -171,7 +174,8 @@ class TimelineManagerTest {
 
     @Test
     void test6() throws InterruptedException {
-        var manager = new TimelineManager(100_000, 1000, 5);
+        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 2_000;
@@ -207,11 +211,11 @@ class TimelineManagerTest {
                 // return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
         }; 
         
-        var manager = new TimelineManager(100_000, 
-                                  1000, 
-                                3, 
-                                        fil, 
-                                        clock).verbose(true);
+        var manager = new TimelineManager.Builder(100_000, 1000, 3) 
+            .eventFilterer(fil)
+            .clock(clock)
+            .verbose(true)
+            .build();
         
         var concurrentModifier = new ConcurrentModifier();
 
@@ -249,7 +253,7 @@ class TimelineManagerTest {
         var maxEvents = 100;
         var window = 1000;
         var nTimelines = 3;
-        var manager = new TimelineManager(maxEvents, window, nTimelines);
+        var manager = new TimelineManager.Builder(maxEvents, window, nTimelines).build();
         
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -301,7 +305,7 @@ class TimelineManagerTest {
             return t.isBeforeEventThreshold(.97);
         };
         
-        var manager = new TimelineManager(maxEvents, window, nTimelines, fil).verbose(true);
+        var manager = new TimelineManager.Builder(maxEvents, window, nTimelines).eventFilterer(fil).verbose(true).build();
 
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();

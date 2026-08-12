@@ -44,7 +44,7 @@ public class TimelineManagerOverflowTest {
         };
 
         // var manager = new TimelineManager(maxEventsAllowed, windowMs, nTimelines, fil);
-        var manager = new TimelineManager(maxEventsAllowed, windowMs, 3, fil);
+        var manager = new TimelineManager.Builder(maxEventsAllowed, windowMs, 3).eventFilterer(fil).build();
 
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService executor = Executors.newFixedThreadPool(threads);

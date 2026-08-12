@@ -23,7 +23,9 @@ class TimelineManagerStableTest {
         //     return true;
         // };
 
-        var manager = new TimelineManager(maxEvents, windowMs, nTimelines).verbose(true);
+        var manager = new TimelineManager.Builder(maxEvents, windowMs, nTimelines)
+                .verbose(true)
+                .build();
 
         AtomicLong attempted = new AtomicLong(0);
         AtomicLong accepted = new AtomicLong(0);

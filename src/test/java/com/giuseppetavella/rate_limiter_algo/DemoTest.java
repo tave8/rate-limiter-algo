@@ -14,7 +14,9 @@ public class DemoTest {
         Clock clock1 = new ClockImpl();
         Clock clock2 = new ClockImpl();         
         
-        RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window, 5, clock1).verbose(true);
+        RateLimiter rateLimiter1 = new TimelineManager.Builder(maxEvents, window, 1)
+                .build();
+        
         // RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window, clock2);
         
         // rateLimiter1.after(100);

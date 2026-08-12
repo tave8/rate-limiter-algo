@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * A Rate Limiter implementation prioritizing efficiency 
@@ -22,74 +23,56 @@ public class TimelineManager extends RateLimiter {
     private final int nTimelines;
     private final List<Timeline> timelines;
     private final EventFilterer eventFilterer;
-    private boolean verbose;
-    
-    /**
-     * Most custom.
-     * 
-     * @param maxEvents
-     * @param window
-     * @param nTimelines
-     * @param fil
-     */
-    public TimelineManager(int maxEvents,
-                           long window,
-                           int nTimelines,
-                           EventFilterer fil,
-                           Clock clock) 
-                               throws IllegalArgumentException
-    { 
+    private final Supplier<Timeline> timelineSupplier;
+    private final boolean verbose;
 
-        super(maxEvents, window, clock);
+    public TimelineManager(Builder builder) 
+    {
         
-        this.nTimelines = nTimelines;
-        this.eventFilterer = fil;
+        // Timeline
+        super(
+                builder.maxEvents, 
+                builder.window, 
+                builder.clock
+        );
+        
+        if(builder.nTimelines < 1) {
+            throw new IllegalStateException("number of timelines must be >= 1.");
+        }
+        
         this.timelines = new ArrayList<>();
-        this.verbose = false;
-        init();
+        this.nTimelines = builder.nTimelines;
+        this.verbose = builder.verbose;
+        // If no event filterer provided, always return true.
+        this.eventFilterer = builder.eventFilterer == null
+                                ? (_) -> true 
+                                : builder.eventFilterer;
+        // If no timeline supplier was provided, use a default timeline implementation
+        this.timelineSupplier = builder.timelineSupplier == null
+                                        ? this::defaultTimelineSupplier
+                                        : builder.timelineSupplier;
+        
+        // Build timelines with given supplier
+        for (int i = 0; i < nTimelines; i++) {
+            timelines.add( timelineSupplier.get() );
+        }
+        
+        // Schedule timelines
+        for (int i = 0; i < nTimelines; i++) {
+            var scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.scheduleAtFixedRate(
+                buildScheduledTask(i),
+                calcInitialDelay(i),
+                window,
+                TimeUnit.MILLISECONDS
+            );
+        }
+        
     }
-
-    public TimelineManager(int maxEvents, 
-                           long window, 
-                           int nTimelines,
-                           Clock clock) 
-    {
-        this(maxEvents, window, nTimelines, (_) -> true, clock);
-    }
-
-
-    public TimelineManager(int maxEvents,
-                           long window,
-                           int nTimelines,
-                           EventFilterer eventFilterer)
-    {
-        this(maxEvents, window, nTimelines, eventFilterer, new ClockImpl());
-    }
-
-
-    /**
-     * No filter.
-     * 
-     * @param maxEvents
-     * @param window
-     * @param nTimelines
-     */
-    public TimelineManager(int maxEvents,
-                           long window,
-                           int nTimelines) 
-    {
-        this(maxEvents, window, nTimelines, (_) -> true);
-    }
-
-    /**
-     * 1 timeline, no filter.
-     * 
-     * @param maxEvents
-     * @param window
-     */
-    public TimelineManager(int maxEvents, long window) 
-    {
-        this(maxEvents, window, 1);   
+    
+    
+    private Timeline defaultTimelineSupplier() {
+        return new ReactiveTimeline(maxEvents, window, eventFilterer, clock);
     }
     
     
@@ -116,7 +99,7 @@ public class TimelineManager extends RateLimiter {
     public boolean canAdd(int nEvents) {
         // Check if all timelines can add event
         for (var t : timelines) {
-            if(!t.canAdd(nEvents)) {
+            if( !t.canAdd(nEvents) ) {
                 return false;
             }
         }
@@ -174,17 +157,7 @@ public class TimelineManager extends RateLimiter {
         return (window / nTimelines) * factor;
     }
     
-
-    /**
-     * Set verbosity. 
-     * 
-     * @param verbose
-     * @return
-     */
-    public TimelineManager verbose(boolean verbose) {
-        this.verbose = verbose;   
-        return this;
-    }
+    
 
     /**
      * Get the timeline associated to the scheduler,
@@ -212,34 +185,57 @@ public class TimelineManager extends RateLimiter {
             }
         };
     }
-    
-    // public TimelineManager buildTimelines() {
-    //    
-    //     return this;
-    // }
 
-    /**
-     * Initialize instance. Must not be executed twice.
-     */
-    private void init() {
-        // Schedule as many threads as timelines
-        // TODO: schedule always one thread, but run the tasks 
-        // as if they still had the same effect.
-        // Build timelines
-        for (int i = 0; i < nTimelines; i++) {
-            timelines.add(new ReactiveTimeline(maxEvents, window, eventFilterer, clock));
+
+    public static class Builder {
+        private int maxEvents;
+        private long window;
+        private Clock clock;
+        private int nTimelines;
+        private EventFilterer eventFilterer;
+        private Supplier<Timeline> timelineSupplier;
+        private boolean verbose;
+
+        public Builder(int maxEvents, long window, int nTimelines) {
+            this.maxEvents = maxEvents;
+            this.window = window;
+            this.nTimelines = nTimelines;
+        }
+        
+        public Builder(int maxEvents, long window) {
+            this(maxEvents, window, 1);
+        }
+        
+        public Builder clock(Clock clock) {
+            this.clock = clock;
+            return this;
         }
 
-        for (int i = 0; i < nTimelines; i++) {
-            var scheduler = Executors.newSingleThreadScheduledExecutor();
-            scheduler.scheduleAtFixedRate(
-                    buildScheduledTask(i),
-                    calcInitialDelay(i),
-                    window,
-                    TimeUnit.MILLISECONDS
-            );
+        public Builder nTimelines(int nTimelines) {
+            this.nTimelines = nTimelines;
+            return this;
         }
+
+        public Builder eventFilterer(EventFilterer eventFilterer) {
+            this.eventFilterer = eventFilterer;
+            return this;
+        }
+
+        public Builder timelineSupplier(Supplier<Timeline> timelineSupplier) {
+            this.timelineSupplier = timelineSupplier;
+            return this;
+        }
+
+        public Builder verbose(boolean verbose) {
+            this.verbose = verbose;
+            return this;
+        }
+
+        public TimelineManager build() {
+            return new TimelineManager(this);
+        }
+
     }
 
-    
+
 }
