@@ -257,7 +257,7 @@ public class TimelineManager implements RateLimiter {
         // as if they still had the same effect.
         // Build timelines
         for (int i = 0; i < nTimelines; i++) {
-            timelines.add(new ReactiveTimeline(maxEvents, this, clock));
+            timelines.add(new ReactiveTimeline(maxEvents, window, eventFilterer, clock));
         }
 
         for (int i = 0; i < nTimelines; i++) {

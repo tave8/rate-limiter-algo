@@ -7,17 +7,18 @@ import java.sql.Time;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * The Timeline is the key component of this Rate Limiter implementation.
- * It only knows to run time logic and does not or care about scheduling logic.
+ * A Reactive Timeline provides maximum accuracy.
+ * 
  * 
  */
 public class ReactiveTimeline extends Timeline {
 
     public ReactiveTimeline(int maxEvents,
-                            TimelineManager manager,
+                            long window,
+                            EventFilterer eventFilterer,
                             Clock clock) 
     {
-        super(maxEvents, manager, clock);
+        super(maxEvents, window, eventFilterer, clock);
     }
     
 
@@ -46,7 +47,7 @@ public class ReactiveTimeline extends Timeline {
      */
     @Override
     public ReactiveTimeline add() {
-        if(!hasSpaceForEvents(1)) {
+        if(wouldOverflow()) {
             throw new TooManyEventsInWindowException(maxEvents);
         }
         
@@ -82,7 +83,7 @@ public class ReactiveTimeline extends Timeline {
      */
     @Override
     protected boolean filterIn() {
-        return manager.getEventFilterer().apply(this);
+        return eventFilterer.apply(this);
     }
     
 }
