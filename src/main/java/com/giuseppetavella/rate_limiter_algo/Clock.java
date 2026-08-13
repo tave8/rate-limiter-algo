@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo.core;
+package com.giuseppetavella.rate_limiter_algo;
 
 /**
  * A Clock interface defines the contract for a Clock,

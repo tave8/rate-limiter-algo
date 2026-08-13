@@ -1,11 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.core.RateLimiter;
-import com.giuseppetavella.rate_limiter_algo.examples.Config;
-import com.giuseppetavella.rate_limiter_algo.examples.EmailRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.Timelines;
-import com.giuseppetavella.rate_limiter_algo.examples.EmailService;
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
 import org.junit.jupiter.api.Test;
 
 public class DemoTest {
@@ -39,38 +35,5 @@ public class DemoTest {
         // }
         
     }
-    
-    @Test
-    void usage1() throws InterruptedException {
-        var config = new Config();
-        // Rate limiters. One is a custom type, the other is a library type. 
-        EmailRateLimiter emailLimiter = config.getEmailRateLimiter(); // Custom type
-        RateLimiter aiLimiter = config.getAIRateLimiter(); // Library type
-        
 
-        for (int i = 0; i < 500; i++) {
-            if(emailLimiter.add()) {
-                System.out.println("added: " + i);
-            } else {
-                System.out.println("could not add "+i+" because: " + emailLimiter.getRejectionReason());                
-            }
-            Thread.sleep(10);
-        }
-    }
-
-    @Test
-    void usage2() throws InterruptedException {
-        var config = new Config();
-        EmailRateLimiter emailLimiter = config.getEmailRateLimiter(); 
-        var emailService = new EmailService(emailLimiter); // Pass the rate limiter to the service 
-
-        for (int i = 0; i < 500; i++) {
-            if(emailLimiter.add()) {
-                System.out.println("added: " + i);
-            } else {
-                System.out.println("could not add "+i+" because: " + emailLimiter.getRejectionReason());
-            }
-            Thread.sleep(10);
-        }
-    }
 }

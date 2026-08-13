@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo.core.timeline;
+package com.giuseppetavella.rate_limiter_algo.timeline;
 
 /**
  * An Event Filterer is a function that gets called before adding a new event, 

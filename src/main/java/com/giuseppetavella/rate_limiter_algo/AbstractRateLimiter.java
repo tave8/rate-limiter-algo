@@ -1,6 +1,6 @@
-package com.giuseppetavella.rate_limiter_algo.core;
+package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.core.timeline.RateLimiterState;
+import com.giuseppetavella.rate_limiter_algo.timeline.RateLimiterState;
 
 public abstract class AbstractRateLimiter implements RateLimiter {
     protected final int maxEvents;

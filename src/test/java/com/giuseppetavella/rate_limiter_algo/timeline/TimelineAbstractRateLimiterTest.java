@@ -1,10 +1,8 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.core.ClockImpl;
-import com.giuseppetavella.rate_limiter_algo.core.Clock;
-import com.giuseppetavella.rate_limiter_algo.core.ConcurrentModifier;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.ClockImpl;
+import com.giuseppetavella.rate_limiter_algo.Clock;
+import com.giuseppetavella.rate_limiter_algo.ConcurrentModifier;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

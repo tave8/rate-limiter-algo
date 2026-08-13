@@ -1,9 +1,9 @@
 package com.giuseppetavella.rate_limiter_algo.examples;
 
-import com.giuseppetavella.rate_limiter_algo.core.RateLimiter;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.RateLimiterSpeed;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.RateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
+import com.giuseppetavella.rate_limiter_algo.timeline.RateLimiterSpeed;
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 
 /**
  * Examples of how you can implement a Rate Limiter 
@@ -29,13 +29,14 @@ public class Config {
      * @return
      */
     public RateLimiter getAIRateLimiter() {
-        int maxEvents = 20;
+        int maxEvents = 5;
         long window = 1000;
         var speed = RateLimiterSpeed.NORMAL;
 
         EventFilterer fil = (t) -> {
-            return t.isBeforeEventThreshold(.5);
+            // return t.isBeforeEventThreshold(.5);
             // return true;
+            return true;
         };
         
         // Creating a rate limiter directly from the library
@@ -58,14 +59,13 @@ public class Config {
      * @return
      */
     public EmailRateLimiter getEmailRateLimiter() {
-        int maxEvents = 20;
+        int maxEvents = 5;
         long window = 1000;
         var speed = RateLimiterSpeed.NORMAL;
         
         EventFilterer fil = (t) -> {
-            return t.isBeforeEventThreshold(.5);
-            
-            // return true;
+            // return t.isBeforeEventThreshold(.5);
+            return true;
         };
 
         // Creating a rate limiter from your own implementation

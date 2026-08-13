@@ -2,62 +2,104 @@
 
 This is the Rate Limiter Algorithm, which is part of my [Rate Limiter Project](https://github.com/tave8/rate-limiter). 
 
+This library started from a personal problem; An Email Sending API would allow max 5 emails sent per second. This solution is thought to be used for ***client-side rate limiting***. It's when you use a third-party service and know their request limit and you should limit the requests yourself before you hit that 429 HTTP status code.
+
+Scenarios:
+- You have 1 web server. You can rate limit directly in-memory, in your web server. The client *is* your web server.
+- You have more web servers. You must use a rate limiter, through which you requests are proxied. The client are *all* of your web servers. This is because you have more web servers
+  so the rate limiting cannot be applied to anyone of them but to another web server (that you control) that actually does the rate limiting.
+
+What it offers:
+- Implementation-independent. You can use the same library to rate limit third-party services (so HTTP requests), to rate limit in your web server memory (if you only have 1 machine acting as the client) or use another web server to act as the rate limiter (if you have more web servers acting as the client).
+- Minimal API. You apply rate limiting with 1 method, `add()`. 
+
+
+The goal is to provide you with a Rate Limiter algorithm that is efficient, easy to use and that you can start using right now in your project.
+
+It does not require Spring, however if you use Spring it'll be even easier because this library leverages the convention of using a singleton for each service (a bean) which maps perfectly to how the library is thought to be used: ***1 service instance : 1 rate limiter instance***. 
+
+*The goal was not to compete with existing solutions but to develop my own for pleasure.* 
+
+## The problem
+
 This is the simple problem to solve: 
 
 > Limit how many *events* are allowed to be *added* during a time *window*.
 
 However, this problem must be rephrased, including the actual constraints and usability requirements:
 
-> ...and do so in an efficient manner that can scale to tens of thousands of events per second without requiring maintenance, in a way such that memory and time do not grow linearly with number of events; providing an easy to use and highly configurable, generic interface that can be used to fit a variety of use cases; providing support for custom burst protection; all of this with good thread-safety guarantees.
+> ...and do so in an efficient manner that can scale to hundreds of thousands of events per second without requiring maintenance, in a way such that memory and time do not grow linearly with number of events; providing an easy to use and highly configurable, generic interface that can be used to fit a variety of use cases; providing support for custom burst protection; all of this with good thread-safety guarantees.
 
-Known limitations: 
+## Known limitations
 
 - This is an in-memory solution, so it does not survive power loss (it's not persistent). It implies that long time windows are not suitable, because the longer the window, the more likely it is it can be interrupted midway and thus lose history.  
-- By in-memory we mean memory on a single machine, so this is not distributed.
-- It is not suitable for sub-millisecond precision. For simplicity, the millisecond was chosen as standard time unit across the entire project.
+- By in-memory we mean memory on a single machine, so this is not distributed. So you cannot have more machines acting as a rate limiter, rate limiting the same service. But you can definitely have many clients, many services and many rate limiters, however the memory is local to the individual rate limiter machine, so more rate limiter machines will not know about each other and thus cannot rate limit the same service.
+- There's no support for client-level rate limiting, in the sense that there's no track of which client sent how many requests. The rate limiting is service-wide, meaning you only define how many max events are allowed to be added during a time window for a specific service. Because of this, the library is thought to be used for client-side rate limiting, meaning that the client is responsible for not sending more than 20 requests per second to the AI API, say. 
+- The library was designed to be generic, it does not care about any particular use case and it has no knowledge of its environment. So of course you'll have to detail what "adding an event" means to your use case. You only get the rate limiting logic, how you make it work or where it's located is up to you.
+- It is not suitable for sub-millisecond precision. For simplicity, the millisecond was chosen as standard time unit across the entire project. So when you see time inputs such as `window`, what is always implied is milliseconds.
 
-In practice, use Timeline Manager as the default implementation. 
+
+## Installation 
+
+The library will be built from this repo with JitPack. Go in your `pom.xml` and place these tags.
+
+This tag must be placed in any place as a *direct child* of the `project` tag.
+
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+
+This tag must be placed, of course, as a *direct child* of the `dependencies` tag.
+
+```xml
+<dependency>
+    <groupId>com.github.tave8</groupId>
+    <artifactId>rate-limiter-algo</artifactId>
+    <version>master-SNAPSHOT</version> 
+</dependency>
+```
 
 
-## Usage
+## How to use
 
 A Rate Limiter is, as you might have guessed, an interface. We must instantiate an implementation of a Rate Limiter, to start using it.
 
 ```java
+// Example rate limiting max 100 events per second
 int maxEvents = 100;
 long window = 1000;
 
-RateLimiter rateLimiter1 = new HistoryQueue(maxEvents, window);
-RateLimiter rateLimiter2 = new TimelineManager(maxEvents, window);
+RateLimiter limiter1 = new TimelineRateLimiter.Builder(maxEvents, window).build();
 
-rateLimiter1.add();
-rateLimiter2.add();
+RateLimiter limiter2 = new TimelineRateLimiter.Builder(maxEvents, window).build();
 
-rateLimiter1.canAdd();
-rateLimiter2.canAdd();
+limiter1.add();
+limiter2.add();
 ```
 
-As you can see, because both implementations implement the same interface, you can easily swap one implementation for the other.
+What you need to know is that rate limiting is local to each instance, so the history of `limiter1` is different from the history of `limiter2`. Each instance is separated from any other instance, and has its own "history" of events. Different instances, different rate limiting. This design choice makes the following relationship possible, and it's the pattern you'll see in the entire project: 
 
-The rate limiting is local to each instance, so the history of `rateLimiter1` is different from the history of `rateLimiter2`, and not because they are from different implementations, but simply because they are different instances. In other words, each instance is separated from any other instance, and has its own "history" of events.
-
-Different instances, different rate limiting. This design choice makes the following relationship possible, and it's the pattern you'll see in the entire project: 
-
-> 1 rate limiter instance : 1 service to be rate limited
+> 1 service instance : 1 rate limiter instance
 
 Simply put, events that need to be rate-limited and are part of the same service must use the same instance.
 
 ```java
-RateLimiter rateLimiter1 = new TimelineManager(maxEvents, window); // Its own history
-RateLimiter rateLimiter2 = new TimelineManager(maxEvents, window); // Its own history
-RateLimiter rateLimiter3 = new TimelineManager(maxEvents, window); // Its own history
+RateLimiter limiter1 = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
+RateLimiter limiter2 = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
+RateLimiter limiter3 = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
 ```
-
 
 
 ### Implementation-specific usage
 
-#### Event Filtering (Timeline Manager)
+Each rate limiter implementation offers different features. However, because of the much better performance of the `TimelineRateLimiter`, you are advised to use instead of the `HistoryRateLimiter`. 
+
+#### Event Filtering (TimelineRateLimiter)
 
 Timeline Manager supports custom event filtering logic. This allows you to create custom burst protection logic, for example. As the name suggests, the filter is applied for each new event, only after the condition "is there enough space for a new event" evaluates to true. Here's how easy it is to create your custom event filterer.
 
@@ -74,7 +116,7 @@ EventFilterer fil = (t) -> {
 RateLimiter rateLimiter = new TimelineManager(maxEvents, window, fil); 
 ```
 
-#### Fast-forwarding Time (History Queue)
+#### Fast-forwarding Time (HistoryRateLimiter)
 
 Initially, I had to wait for tests to finish because physical time passed is the whole point of testing a rate limiter. But that wasn't sustainable.
 
@@ -497,3 +539,22 @@ MORE:
     // }
 
 
+### More challenges
+
+
+I started thinking how I could create such a solution that is generic, easy to configure and not invasive. There was no way I would pollute the email sending logic with rate limiting logic.
+
+Rate limiting logic should not care that it's rate limiting sending emails. And sending emails should not care or know that it's being rate limited. They must be decoupled, the rate limiting must be easy to plug in, easy to plug out.
+
+
+And then more questions came up: Do I send the requests to the rate limiter? Do I queue them? Should the rate limiter retry the request if it was rejected? And should the user keep waiting?
+
+And then more questions as to the performance: Should I log all timestamps? But this wouldn't scale.
+
+And then more questions as to the developer experience: I want this to be as little code as possible. It must be a minimal API. The developer might want more customization or to get started quickly, and I should allow both options.
+
+And then more questions as to what party would do the actual rate limiting: Well, I'm using an Email API, so I'm the user of a service. This means that I have no control over the service. I could place
+
+This means that the Rate Limiter is when you use the service, not when you provide the service. When you are the service provider, you want to do more than just rate limit your service, you may also want to rate limit per client.
+
+And what when I have more machines that all use the same third-party service? Then the in-memory per-machine solution won't work.

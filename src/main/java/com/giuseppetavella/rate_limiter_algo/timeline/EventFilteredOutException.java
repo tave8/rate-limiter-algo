@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo.core.timeline;
+package com.giuseppetavella.rate_limiter_algo.timeline;
 
 public class EventFilteredOutException extends RuntimeException {
     public EventFilteredOutException(int maxEvents, long currEvents, String details) {

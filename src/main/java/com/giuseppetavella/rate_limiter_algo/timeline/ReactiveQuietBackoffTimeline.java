@@ -1,7 +1,7 @@
-package com.giuseppetavella.rate_limiter_algo.core.timeline;
+package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.core.Clock;
-import com.giuseppetavella.rate_limiter_algo.core.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.Clock;
+import com.giuseppetavella.rate_limiter_algo.RejectionReason;
 
 /**
  *

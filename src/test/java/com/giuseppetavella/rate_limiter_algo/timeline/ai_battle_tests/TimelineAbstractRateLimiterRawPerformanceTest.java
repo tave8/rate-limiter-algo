@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo.timeline.ai_battle_tests;
 
-import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;

@@ -1,8 +1,5 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.core.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.Timeline;
-import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jol.info.GraphLayout;
 

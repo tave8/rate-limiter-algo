@@ -1,9 +1,8 @@
 package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
-import com.giuseppetavella.rate_limiter_algo.core.AbstractRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.core.TooManyEventsInWindowException;
-import com.giuseppetavella.rate_limiter_algo.core.history_queue.HistoryQueue;
+import com.giuseppetavella.rate_limiter_algo.AbstractRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
