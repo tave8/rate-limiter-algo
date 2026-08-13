@@ -1,7 +1,7 @@
-package com.giuseppetavella.rate_limiter_algo.history_queue;
+package com.giuseppetavella.rate_limiter_algo.core.history_queue;
 
 
-import com.giuseppetavella.rate_limiter_algo.*;
+import com.giuseppetavella.rate_limiter_algo.core.*;
 
 import java.util.LinkedList;
 import java.util.concurrent.Executors;

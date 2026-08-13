@@ -1,21 +1,21 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo.core.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.core.Clock;
+import com.giuseppetavella.rate_limiter_algo.core.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.core.TooManyEventsInWindowException;
 
 /**
- * A Reactive Quiet Timeline provides maximum accuracy
- * as well as communicating errors with codes instead of throwing exceptions.
+ * A Reactive Timeline provides maximum accuracy.
  * 
  * 
  */
-public class ReactiveQuietTimeline extends Timeline {
+public class ReactiveTimeline extends Timeline {
 
-    public ReactiveQuietTimeline(Builder builder) 
+    public ReactiveTimeline(Builder builder) 
     {
         super(
-                builder.maxEvents,
-                builder.window,
+                builder.maxEvents, 
+                builder.window, 
                 builder.clock,
                 builder.eventFilterer,
                 builder.id
@@ -50,12 +50,20 @@ public class ReactiveQuietTimeline extends Timeline {
     public boolean add() {
         if(wouldOverflow()) {
             setRejectionReason(RejectionReason.WOULD_OVERFLOW);
-            return false;
+            throw new TooManyEventsInWindowException(maxEvents);
         }
         
-        if(filterOut()) { 
+        if(filterOut()) {
             setRejectionReason(RejectionReason.FILTERED_OUT);
-            return false;
+            throw new EventFilteredOutException(
+                    maxEvents, 
+                    countInWindow.get(), 
+                    "Now: %d, Window start: %d, Diff: %d".formatted(
+                            clock.getNow(), 
+                            windowStart.get(), 
+                            clock.getNow()-windowStart.get()
+                    )
+            );
         }
         
         this.countInWindow.getAndIncrement();
@@ -80,46 +88,45 @@ public class ReactiveQuietTimeline extends Timeline {
     protected boolean filterIn() {
         return eventFilterer.filter(this);
     }
-
-
-
+    
+    
     public static class Builder {
         private int maxEvents;
         private long window;
         private Clock clock;
         private EventFilterer eventFilterer;
         private byte id;
-
+        
         public Builder(int maxEvents, long window, byte id) {
             this.maxEvents = maxEvents;
             this.window = window;
             this.id = id;
         }
-
-        public static ReactiveQuietTimeline newFromManager(TimelineRateLimiter manager) {
-            var builder = new ReactiveQuietTimeline.Builder(
-                    manager.getMaxEvents(),
+        
+        public static ReactiveTimeline newFromManager(TimelineRateLimiter manager) {
+            var builder = new Builder(
+                    manager.getMaxEvents(), 
                     manager.getWindow(),
                     manager.nextTimelineSeq()
             );
             builder.clock(manager.getClock());
             builder.eventFilterer(manager.getEventFilterer());
-            return new ReactiveQuietTimeline(builder);
+            return new ReactiveTimeline(builder);
         }
-
+        
         public Builder clock(Clock clock) {
             this.clock = clock;
             return this;
         }
-
+        
         public Builder eventFilterer(EventFilterer eventFilterer) {
             this.eventFilterer = eventFilterer;
             return this;
         }
-
-        public ReactiveQuietTimeline build() {
-            return new ReactiveQuietTimeline(this);
+        
+        public ReactiveTimeline build() {
+            return new ReactiveTimeline(this);
         }
     }
-
+    
 }

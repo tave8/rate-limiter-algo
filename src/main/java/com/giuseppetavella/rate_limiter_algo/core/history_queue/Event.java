@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo.history_queue;
+package com.giuseppetavella.rate_limiter_algo.core.history_queue;
 
 public class Event {
     private final int seq;

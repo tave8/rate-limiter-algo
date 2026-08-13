@@ -1,7 +1,7 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo.core.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.AbstractRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.core.Clock;
+import com.giuseppetavella.rate_limiter_algo.core.AbstractRateLimiter;
 
 import java.util.ArrayList;
 import java.util.List;

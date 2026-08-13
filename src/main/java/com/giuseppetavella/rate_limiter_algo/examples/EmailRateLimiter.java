@@ -1,10 +1,10 @@
-package com.giuseppetavella.rate_limiter_algo.demo;
+package com.giuseppetavella.rate_limiter_algo.examples;
 
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
-import com.giuseppetavella.rate_limiter_algo.RejectionReason;
-import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.timeline.RateLimiterSpeed;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.core.RateLimiter;
+import com.giuseppetavella.rate_limiter_algo.core.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.core.timeline.EventFilterer;
+import com.giuseppetavella.rate_limiter_algo.core.timeline.RateLimiterSpeed;
+import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
 
 /**
  * Example usage. Your service (an Email API)

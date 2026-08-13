@@ -1,19 +1,28 @@
-package com.giuseppetavella.rate_limiter_algo.demo;
+package com.giuseppetavella.rate_limiter_algo.examples;
 
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
-import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.timeline.RateLimiterSpeed;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.core.RateLimiter;
+import com.giuseppetavella.rate_limiter_algo.core.timeline.EventFilterer;
+import com.giuseppetavella.rate_limiter_algo.core.timeline.RateLimiterSpeed;
+import com.giuseppetavella.rate_limiter_algo.core.timeline.TimelineRateLimiter;
 
 /**
  * Examples of how you can implement a Rate Limiter 
  * in your project. Always remember to start the rate limiter.
+ * 
+ * <br><br>
+ * 
+ * Imagine this is a configuration class in Spring. 
+ * You annotate the method to be a bean, which means 
+ * you get a singleton of that bean. Because you associate
+ * a rate limiter with a service, and a service with a rate limiter
+ * (1 rate limiter instance : 1 service instance) then each bean corresponds
+ * to a rate limiter instance. 
+ * 
  */
-// Demo of how it would work with Spring
-public class Configuration {
+public class Config {
 
     /**
-     * Method A: Create a rate limiter from the implementation. 
+     * Method A: Create a rate limiter from a default implementation. 
      * Pro: quick, no setup. 
      * Con: no custom type.
      * 
@@ -29,6 +38,7 @@ public class Configuration {
             // return true;
         };
         
+        // Creating a rate limiter directly from the library
         var limiter = new TimelineRateLimiter.Builder(maxEvents, window)
                 .speed(speed)
                 .eventFilterer(fil)
@@ -57,8 +67,8 @@ public class Configuration {
             
             // return true;
         };
-        
-        // Limiter is already started in custom class
+
+        // Creating a rate limiter from your own implementation
         return new EmailRateLimiter.Builder(maxEvents, window)
                 .speed(speed)
                 .eventFilterer(fil)

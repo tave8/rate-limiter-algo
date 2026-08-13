@@ -1,8 +1,7 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo.core.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.ClockImpl;
-import com.giuseppetavella.rate_limiter_algo.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.core.Clock;
+import com.giuseppetavella.rate_limiter_algo.core.RejectionReason;
 
 import java.util.concurrent.atomic.AtomicLong;
 

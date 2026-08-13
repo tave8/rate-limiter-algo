@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo;
+package com.giuseppetavella.rate_limiter_algo.core;
 
 public class TooManyEventsInWindowException extends RuntimeException {
     public TooManyEventsInWindowException(int maxEvents, long currCount) {
