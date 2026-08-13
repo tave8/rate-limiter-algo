@@ -63,6 +63,7 @@ public abstract class Timeline {
     protected final EventFilterer eventFilterer;
     protected final Clock clock;
     protected final byte id;
+    protected long backoffUntil;
     
     protected final AtomicLong countInWindow;
     protected final AtomicLong windowStart;
@@ -289,5 +290,17 @@ public abstract class Timeline {
 
     public byte getId() {
         return id;
+    }
+
+    public long getBackoffUntil() {
+        return backoffUntil;
+    }
+
+    public void setBackoffUntil(long backoffUntil) {
+        this.backoffUntil = backoffUntil;
+    }
+
+    public boolean isPastBackoff() {
+        return clock.getNow() > backoffUntil;
     }
 }

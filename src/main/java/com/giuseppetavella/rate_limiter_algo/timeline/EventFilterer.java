@@ -82,5 +82,18 @@ import java.util.function.Function;
  */
 @FunctionalInterface
 public interface EventFilterer {
+    /**
+     * Abstracts away the timelines into a single method 
+     * that passes a timeline one at a time.
+     * The user does not have to care about how many timelines 
+     * logically work together, or when or how each timeline
+     * has been called.
+     * 
+     * 
+     * @param t a timeline of the timelines logically working together 
+     *          (in a manager, for example)
+     * @return true if the new event can be added, 
+     *          false if the new event cannot be added
+     */
     boolean filter(Timeline t);
 }

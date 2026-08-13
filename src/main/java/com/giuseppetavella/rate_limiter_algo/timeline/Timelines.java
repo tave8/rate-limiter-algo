@@ -9,5 +9,9 @@ public class Timelines {
     public static ReactiveQuietTimeline newReactiveQuietFrom(TimelineManager m) {
         return ReactiveQuietTimeline.Builder.newFromManager(m);
     }
+
+    public static ReactiveQuietBackoffTimeline newReactiveQuietBackoffFrom(TimelineManager m) {
+        return ReactiveQuietBackoffTimeline.Builder.newFromManager(m);
+    }
     
 }

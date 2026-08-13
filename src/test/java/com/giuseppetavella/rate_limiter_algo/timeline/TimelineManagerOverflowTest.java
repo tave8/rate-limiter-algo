@@ -36,16 +36,17 @@ public class TimelineManagerOverflowTest {
         // =================================================================
 
         EventFilterer fil = (t) -> {
-            // if (t.isBeforeWindowThreshold(.8)) {
-            //     return t.isBeforeEventThreshold(.95);
-            // }
-            return t.isBeforeEventThreshold(.63);
+            if (t.isBeforeWindowThreshold(.8)) {
+                return t.isBeforeEventThreshold(.95);
+            }
+            // return true;
+            return t.isBeforeEventThreshold(.93);
         };
 
         TimelineManager manager = new TimelineManager.Builder(maxEventsAllowed, windowMs, nTimelines)
                 .eventFilterer(fil).build();
         
-        manager.setTimelineSupplier(() -> ReactiveQuietTimeline.Builder.newFromManager(manager));
+        manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
 
         manager.start();
         
@@ -78,7 +79,7 @@ public class TimelineManagerOverflowTest {
                             long rejectNum = totalRejected.incrementAndGet();
                             // Capture IF, WHEN, and BY HOW MUCH
                             // NOTE: if you comment this logging, performance will massively increase 
-                            // overflowLog.add(new OverflowRecord(Instant.now(), attemptNum, rejectNum));
+                            overflowLog.add(new OverflowRecord(Instant.now(), attemptNum, rejectNum));
                         }
                     }
                 } catch (InterruptedException ignored) {

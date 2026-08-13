@@ -26,13 +26,15 @@ public class TimelineManager extends RateLimiter {
     private Supplier<Timeline> timelineSupplier;
     private final boolean verbose;
     private byte timelineSeq;
+    // private final List<Scheduled>
 
     public TimelineManager(Builder builder) 
     {
         
-        if(builder.nTimelines < 1) {
-            throw new IllegalStateException("number of timelines must be >= 1.");
+        if(builder.nTimelines < 1 || builder.nTimelines > 24) {
+            throw new IllegalStateException("number of timelines must be >= 1 and <= 24.");
         }
+        
         
         // Timeline
         super(
@@ -220,7 +222,6 @@ public class TimelineManager extends RateLimiter {
      * @return
      */
     public long calcBuffer(int factor) {
-
         return (window * factor) / nTimelines;
     }
     
@@ -308,6 +309,7 @@ public class TimelineManager extends RateLimiter {
 
     }
 
-    
-
+    public List<Timeline> getTimelines() {
+        return timelines;
+    }
 }
