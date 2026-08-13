@@ -10,10 +10,10 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-class TimelineManagerTest {
+class TimelineAbstractRateLimiterTest {
     @Test
     void test0() throws InterruptedException {
-        var manager = new TimelineManager.Builder(1000, 1000, 5)
+        var manager = new TimelineRateLimiter.Builder(1000, 1000).nTimelines(5)
                 .verbose(true)
                 .build();
         
@@ -42,7 +42,7 @@ class TimelineManagerTest {
     
     @Test
     void test1() throws InterruptedException {
-        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
         
         // timeline manager - get max peak for each instance. at add operation.
@@ -68,7 +68,7 @@ class TimelineManagerTest {
 
     @Test
     void test2() throws InterruptedException {
-        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 100;
@@ -92,7 +92,7 @@ class TimelineManagerTest {
 
     @Test
     void test3() throws InterruptedException {
-        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 10;
@@ -115,7 +115,7 @@ class TimelineManagerTest {
 
     @Test
     void test4() throws InterruptedException {
-        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 100;
@@ -142,7 +142,7 @@ class TimelineManagerTest {
 
     @Test
     void test5() throws InterruptedException {
-        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 1000;
@@ -174,7 +174,7 @@ class TimelineManagerTest {
 
     @Test
     void test6() throws InterruptedException {
-        var manager = new TimelineManager.Builder(100_000, 1000, 5).build();
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
 
         var concurrentModifier = new ConcurrentModifier();
 
@@ -211,7 +211,7 @@ class TimelineManagerTest {
                 // return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
         }; 
         
-        var manager = new TimelineManager.Builder(100_000, 1000, 3) 
+        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(3) 
             .eventFilterer(fil)
             .clock(clock)
             .verbose(true)
@@ -253,7 +253,7 @@ class TimelineManagerTest {
         var maxEvents = 100;
         var window = 1000;
         var nTimelines = 3;
-        var manager = new TimelineManager.Builder(maxEvents, window, nTimelines).build();
+        var manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).build();
         
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -305,7 +305,7 @@ class TimelineManagerTest {
             return t.isBeforeEventThreshold(.97);
         };
         
-        var manager = new TimelineManager.Builder(maxEvents, window, nTimelines).eventFilterer(fil).verbose(true).build();
+        var manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).eventFilterer(fil).verbose(true).build();
 
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();

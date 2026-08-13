@@ -6,7 +6,7 @@ import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class TimelineManagerChaoticTest {
+class TimelineAbstractRateLimiterChaoticTest {
 
     @Test
     void testChaoticConcurrencyOnTimelineManager() throws InterruptedException {
@@ -22,7 +22,11 @@ class TimelineManagerChaoticTest {
             return t.isBeforeEventThreshold(.97);
         };
 
-        var manager = new TimelineManager.Builder(maxEvents, window, nTimelines).eventFilterer(fil).verbose(true).build();
+        var manager = new TimelineRateLimiter.Builder(maxEvents, window)
+                .nTimelines(nTimelines)
+                .eventFilterer(fil)
+                .verbose(true)
+                .build();
 
         int poolSize = 16;
         int burstThreads = 8;
@@ -51,7 +55,7 @@ class TimelineManagerChaoticTest {
         System.out.println("Total manager.add() calls attempted: " + totalAttemptedAdds.get());
     }
 
-    private void scheduleChaoticTask(ScheduledExecutorService scheduler, TimelineManager manager, AtomicInteger totalAttemptedAdds) {
+    private void scheduleChaoticTask(ScheduledExecutorService scheduler, TimelineRateLimiter manager, AtomicInteger totalAttemptedAdds) {
         long nextDelayMs = ThreadLocalRandom.current().nextLong(5, 150);
 
         scheduler.schedule(() -> {
@@ -78,8 +82,8 @@ class TimelineManagerChaoticTest {
         }, nextDelayMs, TimeUnit.MILLISECONDS);
     }
 
-    private void scheduleBurstCollisions(ScheduledExecutorService scheduler, ExecutorService burstExecutor, 
-                                        TimelineManager manager, int burstThreads, AtomicInteger totalAttemptedAdds) {
+    private void scheduleBurstCollisions(ScheduledExecutorService scheduler, ExecutorService burstExecutor,
+                                         TimelineRateLimiter manager, int burstThreads, AtomicInteger totalAttemptedAdds) {
         
         scheduler.scheduleAtFixedRate(() -> {
             CyclicBarrier barrier = new CyclicBarrier(burstThreads);

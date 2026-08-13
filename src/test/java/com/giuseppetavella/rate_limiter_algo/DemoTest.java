@@ -1,9 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.history_queue.HistoryQueue;
-import com.giuseppetavella.rate_limiter_algo.timeline.ReactiveQuietTimeline;
-import com.giuseppetavella.rate_limiter_algo.timeline.ReactiveTimeline;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineManager;
+import com.giuseppetavella.rate_limiter_algo.demo.Configuration;
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +12,7 @@ public class DemoTest {
         long window = 1000;
         
         
-        TimelineManager manager = new TimelineManager.Builder(maxEvents, window, 1)
+        TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(1)
                 .build();
 
         manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
@@ -37,5 +35,22 @@ public class DemoTest {
         //    
         // }
         
+    }
+    
+    @Test
+    void usage1() throws InterruptedException {
+        var config = new Configuration();
+        var emailLimiter = config.getEmailRateLimiter();
+        var aiLimiter = config.getAIRateLimiter();
+        
+
+        for (int i = 0; i < 500; i++) {
+            if(emailLimiter.add()) {
+                System.out.println("added: " + i);
+            } else {
+                System.out.println("could not add "+i+" because: " + emailLimiter.getRejectionReason());                
+            }
+            Thread.sleep(10);
+        }
     }
 }

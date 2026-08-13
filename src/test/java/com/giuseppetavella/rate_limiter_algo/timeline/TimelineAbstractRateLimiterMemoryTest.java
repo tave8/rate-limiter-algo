@@ -1,6 +1,5 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.history_queue.HistoryQueue;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jol.info.GraphLayout;
 
@@ -9,7 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class TimelineManagerMemoryTest {
+public class TimelineAbstractRateLimiterMemoryTest {
 
     @Test
     void measureTimelineManagerMemoryUnderLoad() throws InterruptedException {
@@ -23,7 +22,7 @@ public class TimelineManagerMemoryTest {
             }
         };
         
-        var manager = new TimelineManager.Builder(10_000, 1_000)
+        var manager = new TimelineRateLimiter.Builder(10_000, 1_000)
                 .eventFilterer(filterer).build();
         
         // manager.setTimelineSupplier(() -> ReactiveQuietTimeline.Builder.fromManager(manager));

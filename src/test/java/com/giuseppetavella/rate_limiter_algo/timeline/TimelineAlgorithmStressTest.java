@@ -18,7 +18,7 @@ public class TimelineAlgorithmStressTest {
     private static final int WINDOW_MS = 1_000;
     private static final int TIMELINES_COUNT = 6;
 
-    private TimelineManager manager;
+    private TimelineRateLimiter manager;
     private ExecutorService executor;
     private int cores;
 
@@ -27,7 +27,7 @@ public class TimelineAlgorithmStressTest {
         cores = Runtime.getRuntime().availableProcessors();
         executor = Executors.newFixedThreadPool(cores);
 
-        manager = new TimelineManager.Builder(MAX_EVENTS, WINDOW_MS, TIMELINES_COUNT)
+        manager = new TimelineRateLimiter.Builder(MAX_EVENTS, WINDOW_MS).nTimelines(TIMELINES_COUNT)
                 .eventFilterer((t) -> true)
                 .build();
 

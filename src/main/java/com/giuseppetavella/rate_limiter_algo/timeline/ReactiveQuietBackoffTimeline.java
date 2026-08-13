@@ -8,7 +8,7 @@ import com.giuseppetavella.rate_limiter_algo.RejectionReason;
  *
  */
 public class ReactiveQuietBackoffTimeline extends Timeline {
-    private final TimelineManager manager;
+    private final TimelineRateLimiter manager;
 
     public ReactiveQuietBackoffTimeline(Builder builder)
     {
@@ -124,7 +124,7 @@ public class ReactiveQuietBackoffTimeline extends Timeline {
         private Clock clock;
         private EventFilterer eventFilterer;
         private byte id;
-        private TimelineManager manager;
+        private TimelineRateLimiter manager;
 
         public Builder(int maxEvents, long window, byte id) {
             this.maxEvents = maxEvents;
@@ -132,7 +132,7 @@ public class ReactiveQuietBackoffTimeline extends Timeline {
             this.id = id;
         }
 
-        public static ReactiveQuietBackoffTimeline newFromManager(TimelineManager manager) {
+        public static ReactiveQuietBackoffTimeline newFromManager(TimelineRateLimiter manager) {
             var builder = new ReactiveQuietBackoffTimeline.Builder(
                     manager.getMaxEvents(),
                     manager.getWindow(),
@@ -154,7 +154,7 @@ public class ReactiveQuietBackoffTimeline extends Timeline {
             return this;
         }
         
-        public Builder timelineManager(TimelineManager manager) {
+        public Builder timelineManager(TimelineRateLimiter manager) {
             this.manager = manager;
             return this;
         }

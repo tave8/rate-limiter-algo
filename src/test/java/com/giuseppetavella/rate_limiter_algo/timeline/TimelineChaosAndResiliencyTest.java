@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TimelineChaosAndResiliencyTest {
 
-    private TimelineManager manager;
+    private TimelineRateLimiter manager;
     private ExecutorService executor;
     private int cores;
 
@@ -22,7 +22,7 @@ public class TimelineChaosAndResiliencyTest {
         cores = Runtime.getRuntime().availableProcessors();
         executor = Executors.newFixedThreadPool(cores);
 
-        manager = new TimelineManager.Builder(10_000, 1_000, 6).build();
+        manager = new TimelineRateLimiter.Builder(10_000, 1_000).nTimelines(6).build();
         manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
         manager.start();
     }

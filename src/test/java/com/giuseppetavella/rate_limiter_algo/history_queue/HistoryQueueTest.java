@@ -1,7 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
+import com.giuseppetavella.rate_limiter_algo.AbstractRateLimiter;
 import com.giuseppetavella.rate_limiter_algo.TooManyEventsInWindowException;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ class HistoryQueueTest {
 
     @Test
     void whenAddOnePointInPeriodAndThenWaitTooLongThenNotInPeriod() {
-        RateLimiter history = new HistoryQueue(1, 1000);
+        AbstractRateLimiter history = new HistoryQueue(1, 1000);
         history.add(); // 1
         history.after(1050); // 0
 

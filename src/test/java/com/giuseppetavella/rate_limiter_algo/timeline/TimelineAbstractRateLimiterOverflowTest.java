@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TimelineManagerOverflowTest {
+public class TimelineAbstractRateLimiterOverflowTest {
 
     // Helper class to capture individual rejection metadata
     public static class OverflowRecord {
@@ -43,7 +43,7 @@ public class TimelineManagerOverflowTest {
             return t.isBeforeEventThreshold(.93);
         };
 
-        TimelineManager manager = new TimelineManager.Builder(maxEventsAllowed, windowMs, nTimelines)
+        TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEventsAllowed, windowMs).nTimelines(nTimelines)
                 .eventFilterer(fil).build();
         
         manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));

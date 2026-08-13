@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  * @author Giuseppe Tavella
  */
-public class HistoryQueue extends RateLimiter {
+public class HistoryQueue extends AbstractRateLimiter {
     private final LinkedList<Event> queue;
     private int nextSeq;
     private long lastLatency;

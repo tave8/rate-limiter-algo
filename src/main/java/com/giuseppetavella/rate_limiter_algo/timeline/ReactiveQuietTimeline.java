@@ -96,7 +96,7 @@ public class ReactiveQuietTimeline extends Timeline {
             this.id = id;
         }
 
-        public static ReactiveQuietTimeline newFromManager(TimelineManager manager) {
+        public static ReactiveQuietTimeline newFromManager(TimelineRateLimiter manager) {
             var builder = new ReactiveQuietTimeline.Builder(
                     manager.getMaxEvents(),
                     manager.getWindow(),

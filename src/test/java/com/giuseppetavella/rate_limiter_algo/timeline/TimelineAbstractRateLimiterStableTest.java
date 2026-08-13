@@ -5,9 +5,7 @@ import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class TimelineManagerStableTest {
+class TimelineAbstractRateLimiterStableTest {
 
     @Test
     void testSteadyStateTraffic() throws InterruptedException {
@@ -23,7 +21,7 @@ class TimelineManagerStableTest {
         //     return true;
         // };
 
-        var manager = new TimelineManager.Builder(maxEvents, windowMs, nTimelines)
+        var manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines)
                 .verbose(true)
                 .build();
 

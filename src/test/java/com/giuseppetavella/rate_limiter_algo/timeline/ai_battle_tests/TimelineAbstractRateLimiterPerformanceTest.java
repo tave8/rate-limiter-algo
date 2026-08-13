@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo.timeline.ai_battle_tests;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineManager;
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author AI Battle-Test Suite
  */
-public class TimelineManagerPerformanceTest {
+public class TimelineAbstractRateLimiterPerformanceTest {
 
     @Test
     @DisplayName("Battle-Test: High-Concurrency Throughput and Latency Percentiles (1 to 64 Threads)")
@@ -60,7 +60,7 @@ public class TimelineManagerPerformanceTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (int threads : threadCounts) {
-            TimelineManager manager = new TimelineManager.Builder(maxEvents, windowMs, nTimelines).build();
+            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
             manager.start();
 
             ExecutorService executor = Executors.newFixedThreadPool(threads);

@@ -2,7 +2,6 @@ package com.giuseppetavella.rate_limiter_algo.history_queue;
 
 
 import com.giuseppetavella.rate_limiter_algo.ConcurrentModifier;
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

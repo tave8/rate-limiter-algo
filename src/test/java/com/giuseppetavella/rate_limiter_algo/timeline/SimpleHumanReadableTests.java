@@ -8,12 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SimpleHumanReadableTests {
 
-    private TimelineManager manager;
+    private TimelineRateLimiter manager;
 
     @BeforeEach
     void setUp() {
         // Simple setup: 1,000 capacity limit
-        manager = new TimelineManager.Builder(1_000, 1_000, 1).build();
+        manager = new TimelineRateLimiter.Builder(1_000, 1_000).nTimelines(1).build();
         manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
         manager.start();
     }

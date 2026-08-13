@@ -1,12 +1,12 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
-import com.giuseppetavella.rate_limiter_algo.ClockImpl;
 import com.giuseppetavella.rate_limiter_algo.Clock;
-import com.giuseppetavella.rate_limiter_algo.RateLimiter;
+import com.giuseppetavella.rate_limiter_algo.AbstractRateLimiter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -17,24 +17,36 @@ import java.util.function.Supplier;
  * and can be approximated to constant time complexity.
  * The Timeline Manager's job is to schedule and run the timelines
  * and to make the algorithm usable for the user.
+ * 
+ * <br><br>
+ * 
+ * It must be started.
  *
  */
-public class TimelineManager extends RateLimiter {
+public class TimelineRateLimiter extends AbstractRateLimiter {
     private final int nTimelines;
     private final List<Timeline> timelines;
     private final EventFilterer eventFilterer;
     private Supplier<Timeline> timelineSupplier;
     private final boolean verbose;
     private byte timelineSeq;
-    // private final List<Scheduled>
+    private final List<ScheduledExecutorService> schedulers;
+    
 
-    public TimelineManager(Builder builder) 
+    public TimelineRateLimiter(Builder builder) 
     {
+        // Don't care about speed - only nTimelines will be set, so speed must be adapted
+        var speedValid = builder.speed != null;
+        var nTimelinesValid = builder.nTimelines >= 1 && builder.nTimelines <= 24;
         
-        if(builder.nTimelines < 1 || builder.nTimelines > 24) {
-            throw new IllegalStateException("number of timelines must be >= 1 and <= 24.");
+        // Cannot have both valid or invalid - must have exactly one valid
+        if((speedValid && nTimelinesValid) 
+                || (!speedValid && !nTimelinesValid)) 
+        {
+            throw new IllegalStateException("while initializing timeline rate limiter, "
+                                            +"cannot have both speed and nTimelines be valid values "
+                                            +"or invalid values at the same time. exactly one can be valid.");
         }
-        
         
         // Timeline
         super(
@@ -43,8 +55,11 @@ public class TimelineManager extends RateLimiter {
                 builder.clock
         );
         
+        // number of timelines has precedence
+        this.nTimelines = nTimelinesValid 
+                                ? builder.nTimelines 
+                                : SpeedAdapter.nTimelinesFrom(builder.speed);
         this.timelines = new ArrayList<>();
-        this.nTimelines = builder.nTimelines;
         this.verbose = builder.verbose;
         this.timelineSeq = 0;
         // If no event filterer provided, always return true.
@@ -55,22 +70,21 @@ public class TimelineManager extends RateLimiter {
         this.timelineSupplier = builder.timelineSupplier == null
                                         ? this::defaultTimelineSupplier
                                         : builder.timelineSupplier;
+        this.schedulers = new ArrayList<>();
         
     }
     
-    
-    private Timeline defaultTimelineSupplier() {
-        return Timelines.newReactiveQuietFrom(this);
-    }
-    
-    public void setTimelineSupplier(Supplier<Timeline> supplier) {
-        this.timelineSupplier = supplier;
-    }
 
     /**
      * Start the timelines.
      */
     public void start() {
+        if(getState().equals(RateLimiterState.RUNNING)) {
+            throw new IllegalStateException("cannot start rate limiter because it's already running.");
+        }
+        
+        setState(RateLimiterState.STARTING);
+        
         if(timelines == null) {
             throw new IllegalStateException("before starting timelines, "
                                     +"timelines list must be initialized. got null.");
@@ -101,9 +115,24 @@ public class TimelineManager extends RateLimiter {
                     window,
                     TimeUnit.MILLISECONDS
             );
-        } 
+            
+            schedulers.add(scheduler);
+        }
+
+        setState(RateLimiterState.RUNNING);
+
     }
-    
+
+
+    private Timeline defaultTimelineSupplier() {
+        return Timelines.newReactiveQuietFrom(this);
+    }
+
+    public void setTimelineSupplier(Supplier<Timeline> supplier) {
+        this.timelineSupplier = supplier;
+    }
+
+
     /**
      * Add a new event.
      * 
@@ -257,6 +286,19 @@ public class TimelineManager extends RateLimiter {
     public byte nextTimelineSeq() {
         return ++timelineSeq;
     }
+
+    public List<Timeline> getTimelines() {
+        return timelines;
+    }
+
+    @Override
+    public String toString() {
+        return "TimelineRateLimiter{" +
+                "maxEvents=" + maxEvents +
+                ", window=" + window +
+                ", nTimelines=" + nTimelines +
+                '}';
+    }
     
 
     public static class Builder {
@@ -264,18 +306,20 @@ public class TimelineManager extends RateLimiter {
         private long window;
         private Clock clock;
         private int nTimelines;
+        private RateLimiterSpeed speed;
         private EventFilterer eventFilterer;
         private Supplier<Timeline> timelineSupplier;
         private boolean verbose;
 
-        public Builder(int maxEvents, long window, int nTimelines) {
-            this.maxEvents = maxEvents;
-            this.window = window;
-            this.nTimelines = nTimelines;
-        }
         
         public Builder(int maxEvents, long window) {
-            this(maxEvents, window, 1);
+            this.maxEvents = maxEvents;
+            this.window = window;
+        }
+        
+        public Builder nTimelines(int nTimelines) {
+            this.nTimelines = nTimelines;
+            return this;
         }
         
         public Builder clock(Clock clock) {
@@ -283,8 +327,8 @@ public class TimelineManager extends RateLimiter {
             return this;
         }
 
-        public Builder nTimelines(int nTimelines) {
-            this.nTimelines = nTimelines;
+        public Builder speed(RateLimiterSpeed speed) {
+            this.speed = speed;
             return this;
         }
 
@@ -303,13 +347,38 @@ public class TimelineManager extends RateLimiter {
             return this;
         }
 
-        public TimelineManager build() {
-            return new TimelineManager(this);
+        public TimelineRateLimiter build() {
+            return new TimelineRateLimiter(this);
         }
 
     }
 
-    public List<Timeline> getTimelines() {
-        return timelines;
+
+    public static class SpeedAdapter {
+        /**
+         * Adapt a generic rate limiter speed to number of timelines.
+         *
+         * @param speed
+         * @return
+         */
+        public static int nTimelinesFrom(RateLimiterSpeed speed) {
+            var res = switch (speed) {
+                case RateLimiterSpeed.SLOW -> 1;
+                case RateLimiterSpeed.NORMAL -> 3;
+                case RateLimiterSpeed.FAST -> 6;
+                case RateLimiterSpeed.VERY_FAST -> 9;
+                // Unknown input 
+                default -> -1;
+            };
+            // Throw exception - unknown input
+            if(res == -1) {
+                throw new IllegalStateException("while adapting generic rate limiter speed "
+                        +"to timeline rate limiter speed, could not "
+                        +"interpret generic speed into specific.");
+            }
+            return res;
+        }
     }
+
+
 }

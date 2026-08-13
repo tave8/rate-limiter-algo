@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo.timeline.ai_battle_tests;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineManager;
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author AI Battle-Test Suite
  */
-public class TimelineManagerBoundaryBurstTest {
+public class TimelineAbstractRateLimiterBoundaryBurstTest {
 
     @Test
     @DisplayName("Battle-Test: Boundary Spike Mitigation Across Staggered Timelines (N = 1, 2, 4, 8, 16)")
@@ -61,7 +61,7 @@ public class TimelineManagerBoundaryBurstTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (int nTimelines : timelineCounts) {
-            TimelineManager manager = new TimelineManager.Builder(maxEvents, windowMs, nTimelines).build();
+            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
             manager.start();
 
             AtomicInteger totalAccepted = new AtomicInteger(0);
