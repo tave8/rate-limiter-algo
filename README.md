@@ -4,6 +4,10 @@ This is the Rate Limiter Algorithm, which is part of my [Rate Limiter Project](h
 
 This library started from a personal problem; An Email Sending API would allow max 5 emails sent per second. This solution is thought to be used for ***client-side rate limiting***. It's when you use a third-party service and know their request limit and you should limit the requests yourself before you hit that 429 HTTP status code.
 
+Here's how easy it is to create a rate limiter and apply the rate limiting logic.
+
+![Usage](media/usage.png)
+
 Scenarios:
 - You have 1 web server. You can rate limit directly in-memory, in your web server. The client *is* your web server.
 - You have more web servers. You must use a rate limiter, through which you requests are proxied. The client are *all* of your web servers. This is because you have more web servers

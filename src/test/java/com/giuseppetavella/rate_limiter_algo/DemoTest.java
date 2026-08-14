@@ -53,4 +53,34 @@ public class DemoTest {
         System.out.println(acceptedFirstBatch);
     }
 
+    // @Test
+    // void test3() throws InterruptedException {
+    //    
+    //     // Define params
+    //     int maxEvents = 1_000;
+    //     long windowMs = 1_000;
+    //
+    //     // Instantiate 
+    //     TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(maxEvents, windowMs)
+    //             .build();
+    //    
+    //     // Start
+    //     limiter.start();
+    //    
+    //     // Aapply rate limit (add event)
+    //     if( !limiter.add() ) {
+    //         throw new RuntimeException("event rejected because " + limiter.getRejectionReason());
+    //     }
+    //    
+    //    
+    //     // Thread.sleep(1000);
+    //
+    //     int acceptedFirstBatch = 0;
+    //     for (int i = 0; i < capacity * 2; i++) {
+    //         if (limiter.add()) acceptedFirstBatch++;
+    //     }
+    //
+    //     System.out.println(acceptedFirstBatch);
+    // }
+
 }
