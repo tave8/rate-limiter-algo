@@ -55,7 +55,7 @@ public class DemoTest {
 
     // @Test
     // void test3() throws InterruptedException {
-    //    
+    //
     //     // Define params
     //     int maxEvents = 1_000;
     //     long windowMs = 1_000;
@@ -63,16 +63,16 @@ public class DemoTest {
     //     // Instantiate 
     //     TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(maxEvents, windowMs)
     //             .build();
-    //    
+    //
     //     // Start
     //     limiter.start();
-    //    
-    //     // Aapply rate limit (add event)
+    //
+    //     // Apply rate limit (add event)
     //     if( !limiter.add() ) {
     //         throw new RuntimeException("event rejected because " + limiter.getRejectionReason());
     //     }
-    //    
-    //    
+    //
+    //
     //     // Thread.sleep(1000);
     //
     //     int acceptedFirstBatch = 0;
