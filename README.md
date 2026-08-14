@@ -18,7 +18,6 @@ The goal is to provide you with a Rate Limiter algorithm that is efficient, easy
 
 It does not require Spring, however if you use Spring it'll be even easier because this library leverages the convention of using a singleton for each service (a bean) which maps perfectly to how the library is thought to be used: ***1 service instance : 1 rate limiter instance***. 
 
-*The goal was not to compete with existing solutions but to develop my own for pleasure.* 
 
 ## The problem
 
@@ -75,7 +74,6 @@ int maxEvents = 100;
 long window = 1000;
 
 RateLimiter limiter1 = new TimelineRateLimiter.Builder(maxEvents, window).build();
-
 RateLimiter limiter2 = new TimelineRateLimiter.Builder(maxEvents, window).build();
 
 limiter1.add();
@@ -89,9 +87,9 @@ What you need to know is that rate limiting is local to each instance, so the hi
 Simply put, events that need to be rate-limited and are part of the same service must use the same instance.
 
 ```java
-RateLimiter limiter1 = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
-RateLimiter limiter2 = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
-RateLimiter limiter3 = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
+RateLimiter emailLimiter = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
+RateLimiter aiLimiter = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
+RateLimiter pdfLimiter = new TimelineRateLimiter.Builder(maxEvents, window).build(); // Its own history
 ```
 
 
