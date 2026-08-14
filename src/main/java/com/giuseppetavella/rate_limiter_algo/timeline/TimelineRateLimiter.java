@@ -119,6 +119,7 @@ public class TimelineRateLimiter extends AbstractRateLimiter {
             schedulers.add(scheduler);
         }
 
+
         setState(RateLimiterState.RUNNING);
 
     }
@@ -212,7 +213,10 @@ public class TimelineRateLimiter extends AbstractRateLimiter {
      * @return
      */
     private long calcInitialDelay(int timelineIdx) {
-        return calcBuffer(timelineIdx);
+        // BUGFIX: it was `calcBuffer(timelineIdx)` 
+        // but timeline 0 would start with initial delay of 0,
+        // which probably means that it was run immediately.
+        return window - calcBuffer(timelineIdx);
     }
 
     /**

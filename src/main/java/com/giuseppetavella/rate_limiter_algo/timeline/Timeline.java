@@ -203,16 +203,7 @@ public abstract class Timeline {
     public boolean wouldOverflow() {
         return !hasSpaceForEvent();
     }
-
-    /**
-     * Resets the current event count in the window.
-     * Each timeline keeps track of how many events it has added 
-     * since the window start, because at each new window start, the event count is reset,
-     * which we do through this method.
-     */
-    protected void resetCountInWindow() {
-        this.countInWindow.set(0);
-    }
+    
 
     /**
      * Is the current event count, over the max events allowed,

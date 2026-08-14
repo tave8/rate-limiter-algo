@@ -75,7 +75,7 @@ public class ReactiveTimeline extends Timeline {
      */
     @Override
     public void wakeup() {
-        resetCountInWindow();
+        this.countInWindow.set(0);
         this.windowStart.set(clock.getNow());
     }
 

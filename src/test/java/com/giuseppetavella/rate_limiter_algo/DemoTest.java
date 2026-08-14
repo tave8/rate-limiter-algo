@@ -35,5 +35,22 @@ public class DemoTest {
         // }
         
     }
+    
+    @Test 
+    void test2() throws InterruptedException {
+        int capacity = 1_000;
+        long windowMs = 100;
+
+        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
+        limiter.start();
+        // Thread.sleep(1000);
+
+        int acceptedFirstBatch = 0;
+        for (int i = 0; i < capacity * 2; i++) {
+            if (limiter.add()) acceptedFirstBatch++;
+        }
+
+        System.out.println(acceptedFirstBatch);
+    }
 
 }

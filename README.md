@@ -59,7 +59,7 @@ This tag must be placed, of course, as a *direct child* of the `dependencies` ta
 <dependency>
     <groupId>com.github.tave8</groupId>
     <artifactId>rate-limiter-algo</artifactId>
-    <version>master-SNAPSHOT</version> 
+    <version>v1.0.3</version>  <!-- to pin the version, you can use a tag in the github repo -->
 </dependency>
 ```
 

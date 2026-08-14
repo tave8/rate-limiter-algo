@@ -101,8 +101,8 @@ public class ReactiveQuietBackoffTimeline extends Timeline {
                t.setBackoffUntil(clock.getNow() + manager.calcBuffer(1)/6);
             } 
         }
-        
-        resetCountInWindow();
+
+        this.countInWindow.set(0);
         this.windowStart.set(clock.getNow());
     }
 

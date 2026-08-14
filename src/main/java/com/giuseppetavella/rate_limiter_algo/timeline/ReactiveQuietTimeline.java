@@ -48,17 +48,24 @@ public class ReactiveQuietTimeline extends Timeline {
      */
     @Override
     public boolean add() {
-        if(wouldOverflow()) {
-            setRejectionReason(RejectionReason.WOULD_OVERFLOW);
-            return false;
-        }
         
-        if(filterOut()) { 
-            setRejectionReason(RejectionReason.FILTERED_OUT);
-            return false;
-        }
+        // Atomic update 
+        long curr;
+        do {
+            curr = countInWindow.get();
+            
+            if(wouldOverflow()) {
+                setRejectionReason(RejectionReason.WOULD_OVERFLOW);
+                return false;
+            }
+            
+            if(filterOut()) {
+                setRejectionReason(RejectionReason.FILTERED_OUT);
+                return false;
+            }
+            
+        } while(!countInWindow.compareAndSet(curr, curr+1));
         
-        this.countInWindow.getAndIncrement();
         return true;
     }
 
@@ -67,7 +74,7 @@ public class ReactiveQuietTimeline extends Timeline {
      */
     @Override
     public void wakeup() {
-        resetCountInWindow();
+        this.countInWindow.set(0);
         this.windowStart.set(clock.getNow());
     }
 
