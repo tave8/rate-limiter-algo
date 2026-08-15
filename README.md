@@ -339,9 +339,8 @@ This allowed the new Timeline implementation to be faster - I don't remember exa
 
 The second implementation is called Timeline and uses this concept of splitting the time window in proportional fractions so that "within-window but cross-window time intervals" are caught sooner and with more likelihood.
 
-A more formal definition is something like:
+A more formal definition is something like the following (Please be a bit patient and flexible with terminology as it's still forming).
 
-```
 Let t0, t1, t2, t3 be monotonically increasing time points, such that their deltas is the window. In other words, t1 - t0 = t2 - t1 = t3 - t2 = window.
 
 The rate limiter should limit max N events within this window, so the invariant is: count events in window <= max events.
@@ -354,7 +353,7 @@ The problem is, we cannot have this approach with an infinite sliding window, in
 
 This problem requires us then to relax granularity and consider some kind of approximation. Approximation not in event count nor in window; instead in how cross-window intervals are taken into account and thus increasing likelihood and speed of when cross-window intervals are about to produce event overflow.
 
-
+```
 BEFORE (storing all event time points):
 
 |---------------|---------------|---------------
@@ -378,8 +377,9 @@ AFTER (timelines approximate):
 0 |---------------|---------------|---------------
 1      |---------------|---------------|---------------
 2           |---------------|---------------|---------------
-  
+
 ```
+
 
 The whole reason why I brought this up is that while shaping the concept of a timeline, there was a coupling between timelines and threads, specifically: 1 timeline : 1 scheduled thread. The mechanism provided by scheduled threads was that of delaying tasks at delays such that this overlapping was achieved and cross-window event overflow could be detected with more likelihood or quicker.
 
