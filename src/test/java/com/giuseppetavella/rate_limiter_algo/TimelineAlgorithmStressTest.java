@@ -1,5 +1,7 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo;
 
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

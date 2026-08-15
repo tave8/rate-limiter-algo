@@ -1,5 +1,6 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo;
 
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.concurrent.*;

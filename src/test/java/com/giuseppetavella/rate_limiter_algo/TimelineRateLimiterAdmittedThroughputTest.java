@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo.timeline.ai_battle_tests;
+package com.giuseppetavella.rate_limiter_algo;
 
 import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.DisplayName;
