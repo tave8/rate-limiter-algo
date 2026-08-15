@@ -303,6 +303,63 @@ It's on this intuition that a solution was created to simulate waiting without a
 Each history queue has its own concept of time and can be easily modified.
 
 
+### Decoupling timelines from threads
+
+The second implementation is called Timeline and uses this concept of splitting the time window in proportional fractions so that "within-window but cross-window time intervals" are caught sooner and with more likelihood.
+
+A more formal definition is something like:
+
+```
+Let t0, t1, t2, t3 be monotonically increasing time points, such that their deltas is the window. In other words, t1 - t0 = t2 - t1 = t3 - t2 = window.
+
+The rate limiter should limit max N events within this window, so the invariant is: count events in window <= max events.
+
+This makes sense, but the problem is that the window is a moving target. In fact, a valid window would be [t0 + d, t1 + d], with d < window, so d is an arbitrary small (or big) number such that adding it to the time point of the start window would give us back a time point that overlaps one of the previously "rigid" windows.
+
+The problem is, how do we make this window move. The thing is, if we do, we gain maximum reactivity in terms of how fast we detect event overflow in overlapping cross-window intervals, but this requires us to keep track of the exact time of each event. And this means space and time complexity increase linearly with max events, at best. At worst we're storing many more time points.
+
+The problem is, we cannot have this approach with an infinite sliding window, infinite in the sense "like a real number in math, there are infinitely many numbers between a number and any other number".
+
+This problem requires us then to relax granularity and consider some kind of approximation. Approximation not in event count nor in window; instead in how cross-window intervals are taken into account and thus increasing likelihood and speed of when cross-window intervals are about to produce event overflow.
+
+
+BEFORE (storing all event time points):
+
+|---------------|---------------|---------------
+ |---------------|---------------|---------------
+  |---------------|---------------|--------------- 
+   |---------------|---------------|---------------
+   .
+   .
+       |---------------|---------------|---------------
+       . 
+       .
+            |---------------|---------------|---------------    
+            .
+            .
+               |---------------|---------------|---------------    
+
+
+
+AFTER (timelines approximate):
+
+0 |---------------|---------------|---------------
+1      |---------------|---------------|---------------
+2           |---------------|---------------|---------------
+  
+```
+
+The whole reason why I brought this up is that while shaping the concept of a timeline, there was a coupling between timelines and threads, specifically: 1 timeline : 1 scheduled thread. The mechanism provided by scheduled threads was that of delaying tasks at delays such that this overlapping was achieved and cross-window event overflow could be detected with more likelihood or quicker.
+
+The goal now is to decouple a timeline from a thread. Ideally, each rate limiter instance should either only start 1 scheduled thread, or possibly have some kind of scheduling thread per app and then pass that down to the rate limiter instance. This would bring the space complexity from the current near-constant space to literally constant space, right? 
+
+Evolution:
+1. Current situation. Timelines and scheduled threads are strongly coupled. This costs O(T) space per rate limiter instance, where T = number of timelines and the space occupied is that of the scheduled threads.
+2. A first improvement is having 1 scheduled thread per rate limiter instance, bringing space complexity to O(1) per instance.
+3. Another improvement is having the scheduled thread passed down from outside, maybe 1 scheduled thread per app, maybe just dedicated for rate limiting. 
+
+
+
 ### Implementation: Timeline Manager 
 
 The Rate Limiter implementation gives up determinism and loosens up events count accuracy, to gain in efficiency, speed and scalability.

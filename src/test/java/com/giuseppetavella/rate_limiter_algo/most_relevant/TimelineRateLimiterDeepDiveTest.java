@@ -1,4 +1,4 @@
-package com.giuseppetavella.rate_limiter_algo;
+package com.giuseppetavella.rate_limiter_algo.most_relevant;
 
 import com.giuseppetavella.rate_limiter_algo.timeline.Timeline;
 import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
