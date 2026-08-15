@@ -1,5 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo.most_relevant;
 
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineEfficientRateLimiter;
 import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,11 +23,11 @@ public class TimelineRateLimiterAdmittedThroughputTest {
         int capacity = 1_500_000;   // set to whatever your real target ceiling is
         long windowMs = 1_000;       // 1-second window -> capacity IS your target events/sec
         int nTimelines = 3;
-        int threads = 256;
-        int soakSeconds = 10;
+        int threads = 16;
+        int soakSeconds = 30;
         int bucketSeconds = 1;       // per-second buckets so you see the actual sustained rate directly
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineEfficientRateLimiter limiter = new TimelineEfficientRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(nTimelines).build();
         limiter.start();
 

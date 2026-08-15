@@ -293,4 +293,13 @@ public abstract class Timeline {
     public boolean isPastBackoff() {
         return clock.getNow() > backoffUntil;
     }
+
+    @Override
+    public String toString() {
+        return "Timeline{" +
+                "id=" + id +
+                ", maxEvents=" + maxEvents +
+                ", window=" + window +
+                '}';
+    }
 }

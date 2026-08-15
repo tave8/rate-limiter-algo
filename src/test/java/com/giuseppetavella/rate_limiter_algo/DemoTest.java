@@ -1,5 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
+import com.giuseppetavella.rate_limiter_algo.timeline.TimelineEfficientRateLimiter;
 import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
 import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
 import org.junit.jupiter.api.Test;
@@ -82,5 +83,37 @@ public class DemoTest {
     //
     //     System.out.println(acceptedFirstBatch);
     // }
+
+
+    @Test
+    void test4() throws InterruptedException {
+
+        int maxEvents = 100;
+        long windowMs = 1_000;
+
+        TimelineEfficientRateLimiter limiter = new TimelineEfficientRateLimiter.Builder(maxEvents, windowMs)
+                .nTimelines(3)
+                .build();
+
+        limiter.start();
+        
+        Thread.sleep(10000);
+
+        int acceptedFirstBatch = 0;
+        int rejectedFirstBatch = 0;
+        
+        for (int i = 0; i < 950; i++) {
+            if (limiter.add()) {
+                acceptedFirstBatch++;
+            } else {
+                rejectedFirstBatch++;
+            }
+        }
+
+        System.out.println("accepted: " + acceptedFirstBatch);
+        System.out.println("rejected: " + rejectedFirstBatch);
+        
+    }
+
 
 }

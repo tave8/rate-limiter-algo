@@ -89,6 +89,7 @@ public class ReactiveQuietTimeline extends Timeline {
     }
 
 
+    
 
     public static class Builder {
         private int maxEvents;
@@ -114,6 +115,17 @@ public class ReactiveQuietTimeline extends Timeline {
             return new ReactiveQuietTimeline(builder);
         }
 
+        public static ReactiveQuietTimeline newFromManager(TimelineEfficientRateLimiter manager) {
+            var builder = new ReactiveQuietTimeline.Builder(
+                    manager.getMaxEvents(),
+                    manager.getWindow(),
+                    manager.nextTimelineSeq()
+            );
+            builder.clock(manager.getClock());
+            builder.eventFilterer(manager.getEventFilterer());
+            return new ReactiveQuietTimeline(builder);
+        }
+        
         public Builder clock(Clock clock) {
             this.clock = clock;
             return this;
