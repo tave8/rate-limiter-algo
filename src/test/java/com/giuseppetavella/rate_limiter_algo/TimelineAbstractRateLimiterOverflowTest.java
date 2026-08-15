@@ -1,8 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
 import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -46,10 +45,9 @@ public class TimelineAbstractRateLimiterOverflowTest {
             return t.isBeforeEventThreshold(.93);
         };
 
-        TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEventsAllowed, windowMs).nTimelines(nTimelines)
+        TimelineNThreadsRateLimiter manager = new TimelineNThreadsRateLimiter.Builder(maxEventsAllowed, windowMs).nTimelines(nTimelines)
                 .eventFilterer(fil).build();
         
-        manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
 
         manager.start();
         

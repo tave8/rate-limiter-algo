@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +53,7 @@ public class TimelineRateLimiterStressTest {
     // ================================================================================
     // Helper: adapts to add()'s real return type. EDIT THIS if add() isn't boolean.
     // ================================================================================
-    private static boolean attempt(TimelineRateLimiter limiter) {
+    private static boolean attempt(TimelineNThreadsRateLimiter limiter) {
         Object result = limiter.add();
         if (result instanceof Boolean) {
             return (Boolean) result;
@@ -81,7 +81,7 @@ public class TimelineRateLimiterStressTest {
         int threads = 64;
         int attemptsPerThread = 5_000; // threads * attemptsPerThread >> capacity, guaranteed overshoot attempt
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
         limiter.start();
 
         CyclicBarrier barrier = new CyclicBarrier(threads);
@@ -137,7 +137,7 @@ public class TimelineRateLimiterStressTest {
         int capacity = 1_000;
         long windowMs = 500;
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
         limiter.start();
 
         int acceptedFirstBatch = 0;
@@ -174,7 +174,7 @@ public class TimelineRateLimiterStressTest {
         int threads = 16;
         int attemptsPerThread = 5_000;
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
         limiter.start();
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -213,7 +213,7 @@ public class TimelineRateLimiterStressTest {
         int soakSeconds = 30;
         int bucketSeconds = 5; // report throughput per 5s bucket to see the trend, not just the average
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs).nTimelines(3).build();
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs).nTimelines(3).build();
         limiter.start();
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -285,7 +285,7 @@ public class TimelineRateLimiterStressTest {
             long[] lastTrialLatencies = null;
 
             for (int trial = 0; trial < trialsPerConfig; trial++) {
-                TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+                TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                         .nTimelines(nTimelines).build();
                 limiter.start();
 

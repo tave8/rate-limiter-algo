@@ -7,6 +7,7 @@ public abstract class AbstractRateLimiter implements RateLimiter {
     protected final long window;
     protected Clock clock;
     
+    
     protected RejectionReason rejectionReason;
 
     protected RateLimiterState state;
@@ -14,18 +15,19 @@ public abstract class AbstractRateLimiter implements RateLimiter {
     public AbstractRateLimiter(int maxEvents,
                                long window,
                                Clock clock)
-                            throws IllegalArgumentException
+                                    throws IllegalArgumentException
     {
-        if(window < 100) {
-            throw new IllegalArgumentException("Time window must be >= 100.");
+        if(window < 50) {
+            throw new IllegalArgumentException("Time window must be >= 100, got %s.".formatted(window));
         }
         if(maxEvents < 0) {
-            throw new IllegalArgumentException("Max events must be >= 0.");
+            throw new IllegalArgumentException("Max events must be >= 0, got %s.".formatted(maxEvents));
         }
         this.maxEvents = maxEvents;
         this.window = window;
         this.clock = clock == null ? defaultClockSupplier() : clock;
         this.state = RateLimiterState.NEW;
+
     }
 
     public abstract boolean canAdd(int nEvents);
@@ -86,5 +88,14 @@ public abstract class AbstractRateLimiter implements RateLimiter {
 
     public void setState(RateLimiterState state) {
         this.state = state;
+    }
+
+
+    @Override
+    public String toString() {
+        return "AbstractRateLimiter{" +
+                "maxEvents=" + maxEvents +
+                ", window=" + window +
+                '}';
     }
 }

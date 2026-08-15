@@ -1,7 +1,8 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo.timeline.timelines;
 
 import com.giuseppetavella.rate_limiter_algo.Clock;
 import com.giuseppetavella.rate_limiter_algo.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -56,13 +57,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author Giuseppe Tavella
  */
-public abstract class Timeline {
+public abstract class AbstractTimeline {
     protected final int maxEvents;
     protected final long window;
-    protected final EventFilterer eventFilterer;
     protected final Clock clock;
     protected final byte id;
     protected long backoffUntil;
+    protected final EventFilterer eventFilterer;
     
     protected final AtomicLong countInWindow;
     protected final AtomicLong windowStart;
@@ -76,17 +77,17 @@ public abstract class Timeline {
      * @param eventFilterer the user-defined function to decide whether new events can be added or not
      * @param clock an implementation of a clock so that time logic is decoupled from rate limiting logic
      */
-    public Timeline(int maxEvents, 
-                    long window,
-                    Clock clock,
-                    EventFilterer eventFilterer,
-                    byte id) 
+    public AbstractTimeline(int maxEvents,
+                            long window,
+                            Clock clock,
+                            EventFilterer eventFilterer,
+                            byte id) 
     {
-        if(window < 100) {
-            throw new IllegalArgumentException("Time window must be >= 100.");
+        if(window < 50) {
+            throw new IllegalArgumentException("Time window must be >= 100, got %s.".formatted(window));
         }
         if(maxEvents < 0) {
-            throw new IllegalArgumentException("Max events must be >= 0.");
+            throw new IllegalArgumentException("Max events must be >= 0, got %s.".formatted(maxEvents));
         }
         if(clock == null) {
             throw new IllegalArgumentException("clock cannot be null in a timeline.");
@@ -292,6 +293,26 @@ public abstract class Timeline {
 
     public boolean isPastBackoff() {
         return clock.getNow() > backoffUntil;
+    }
+
+    public EventFilterer getEventFilterer() {
+        return eventFilterer;
+    }
+
+    public int getMaxEvents() {
+        return maxEvents;
+    }
+
+    public Clock getClock() {
+        return clock;
+    }
+
+    public long getWindow() {
+        return window;
+    }
+
+    public AtomicLong getWindowStart() {
+        return windowStart;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,7 +61,7 @@ public class TimelineAbstractRateLimiterBoundaryBurstTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (int nTimelines : timelineCounts) {
-            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
+            TimelineNThreadsRateLimiter manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
             manager.start();
 
             AtomicInteger totalAccepted = new AtomicInteger(0);

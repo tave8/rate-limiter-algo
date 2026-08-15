@@ -1,8 +1,8 @@
 package com.giuseppetavella.rate_limiter_algo;
 
 import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.timeline.Timeline;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.timelines.AbstractTimeline;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jol.info.GraphLayout;
 
@@ -17,7 +17,7 @@ public class TimelineAbstractRateLimiterMemoryTest {
     void measureTimelineManagerMemoryUnderLoad() throws InterruptedException {
         EventFilterer filterer = new EventFilterer() {
             @Override
-            public boolean filter(Timeline t) {
+            public boolean filter(AbstractTimeline t) {
                 if (t.isBeforeWindowThreshold(.8)) {
                     return t.isBeforeEventThreshold(.95);
                 }
@@ -25,7 +25,7 @@ public class TimelineAbstractRateLimiterMemoryTest {
             }
         };
         
-        var manager = new TimelineRateLimiter.Builder(10_000, 1_000)
+        var manager = new TimelineNThreadsRateLimiter.Builder(10_000, 1_000)
                 .eventFilterer(filterer).build();
         
         // manager.setTimelineSupplier(() -> ReactiveQuietTimeline.Builder.fromManager(manager));

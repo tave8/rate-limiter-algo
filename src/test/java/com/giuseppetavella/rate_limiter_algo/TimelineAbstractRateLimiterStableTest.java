@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.concurrent.*;
@@ -22,7 +22,7 @@ class TimelineAbstractRateLimiterStableTest {
         //     return true;
         // };
 
-        var manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines)
+        var manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines)
                 .verbose(true)
                 .build();
 

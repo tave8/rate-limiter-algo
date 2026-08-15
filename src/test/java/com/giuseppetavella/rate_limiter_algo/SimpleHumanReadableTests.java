@@ -1,7 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,13 +9,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SimpleHumanReadableTests {
 
-    private TimelineRateLimiter manager;
+    private TimelineNThreadsRateLimiter manager;
 
     @BeforeEach
     void setUp() {
         // Simple setup: 1,000 capacity limit
-        manager = new TimelineRateLimiter.Builder(1_000, 1_000).nTimelines(1).build();
-        manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
+        manager = new TimelineNThreadsRateLimiter.Builder(1_000, 1_000).nTimelines(1).build();
         manager.start();
     }
 

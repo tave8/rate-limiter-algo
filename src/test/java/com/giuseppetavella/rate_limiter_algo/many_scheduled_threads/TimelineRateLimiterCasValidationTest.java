@@ -1,6 +1,6 @@
-package com.giuseppetavella.rate_limiter_algo.most_relevant;
+package com.giuseppetavella.rate_limiter_algo.many_scheduled_threads;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +28,7 @@ public class TimelineRateLimiterCasValidationTest {
         int capacity = 10_000;
         long windowMs = 5_000;
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(1).build();
         limiter.start();
 
@@ -64,7 +64,7 @@ public class TimelineRateLimiterCasValidationTest {
         int[] threadCounts = {2, 4};
 
         for (int threads : threadCounts) {
-            TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+            TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                     .nTimelines(1).build();
             limiter.start();
 
@@ -109,7 +109,7 @@ public class TimelineRateLimiterCasValidationTest {
         int threads = 32;
         int attemptsPerThread = 20_000; // threads * attemptsPerThread = 640,000, > 3x capacity
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(1).build();
         limiter.start();
 
@@ -165,7 +165,7 @@ public class TimelineRateLimiterCasValidationTest {
         int threads = 64;
         long nearSaturationThreshold = (long) (capacity * 0.99); // start measuring after this many accepted
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(1).build();
         limiter.start();
 
@@ -230,7 +230,7 @@ public class TimelineRateLimiterCasValidationTest {
         int threads = 16;
         int attemptsPerThread = 10_000; // threads * attemptsPerThread = 160,000, > 3x capacity
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(1).build();
         limiter.start();
 

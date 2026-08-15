@@ -3,7 +3,7 @@ package com.giuseppetavella.rate_limiter_algo.examples;
 import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
 import com.giuseppetavella.rate_limiter_algo.timeline.RateLimiterSpeed;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 
 /**
  * Examples of how you can implement a Rate Limiter 
@@ -40,7 +40,7 @@ public class Config {
         };
         
         // Creating a rate limiter directly from the library
-        var limiter = new TimelineRateLimiter.Builder(maxEvents, window)
+        var limiter = new TimelineNThreadsRateLimiter.Builder(maxEvents, window)
                 .speed(speed)
                 .eventFilterer(fil)
                 .build();

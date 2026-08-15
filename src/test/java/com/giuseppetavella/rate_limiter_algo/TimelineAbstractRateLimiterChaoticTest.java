@@ -1,7 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
 import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -24,7 +24,7 @@ class TimelineAbstractRateLimiterChaoticTest {
             return t.isBeforeEventThreshold(.97);
         };
 
-        var manager = new TimelineRateLimiter.Builder(maxEvents, window)
+        var manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, window)
                 .nTimelines(nTimelines)
                 .eventFilterer(fil)
                 .verbose(true)
@@ -57,7 +57,7 @@ class TimelineAbstractRateLimiterChaoticTest {
         System.out.println("Total manager.add() calls attempted: " + totalAttemptedAdds.get());
     }
 
-    private void scheduleChaoticTask(ScheduledExecutorService scheduler, TimelineRateLimiter manager, AtomicInteger totalAttemptedAdds) {
+    private void scheduleChaoticTask(ScheduledExecutorService scheduler, TimelineNThreadsRateLimiter manager, AtomicInteger totalAttemptedAdds) {
         long nextDelayMs = ThreadLocalRandom.current().nextLong(5, 150);
 
         scheduler.schedule(() -> {
@@ -85,7 +85,7 @@ class TimelineAbstractRateLimiterChaoticTest {
     }
 
     private void scheduleBurstCollisions(ScheduledExecutorService scheduler, ExecutorService burstExecutor,
-                                         TimelineRateLimiter manager, int burstThreads, AtomicInteger totalAttemptedAdds) {
+                                         TimelineNThreadsRateLimiter manager, int burstThreads, AtomicInteger totalAttemptedAdds) {
         
         scheduler.scheduleAtFixedRate(() -> {
             CyclicBarrier barrier = new CyclicBarrier(burstThreads);

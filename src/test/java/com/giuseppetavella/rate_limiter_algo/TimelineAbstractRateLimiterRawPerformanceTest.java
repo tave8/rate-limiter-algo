@@ -1,6 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -70,7 +70,7 @@ public class TimelineAbstractRateLimiterRawPerformanceTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (int threads : threadCounts) {
-            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
+            TimelineNThreadsRateLimiter manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
             manager.start();
 
             ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -149,7 +149,7 @@ public class TimelineAbstractRateLimiterRawPerformanceTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (long volume : eventVolumes) {
-            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
+            TimelineNThreadsRateLimiter manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, windowMs).nTimelines(nTimelines).build();
             manager.start();
 
             long before = usedHeapKB();
@@ -201,7 +201,7 @@ public class TimelineAbstractRateLimiterRawPerformanceTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (int nTimelines : timelineCounts) {
-            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEventsPerWindow, windowMs).nTimelines(nTimelines).build();
+            TimelineNThreadsRateLimiter manager = new TimelineNThreadsRateLimiter.Builder(maxEventsPerWindow, windowMs).nTimelines(nTimelines).build();
             manager.start();
 
             AtomicLong attempted = new AtomicLong(0);
@@ -266,7 +266,7 @@ public class TimelineAbstractRateLimiterRawPerformanceTest {
         System.out.println("------------------------------------------------------------------------------------------");
 
         for (long window : windows) {
-            TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).build();
+            TimelineNThreadsRateLimiter manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).build();
             System.out.printf("window=%d actual calcBuffer offsets: [1]=%d [8]=%d [15]=%d%n",
                     window, manager.calcBuffer(1), manager.calcBuffer(8), manager.calcBuffer(15));
             manager.start();

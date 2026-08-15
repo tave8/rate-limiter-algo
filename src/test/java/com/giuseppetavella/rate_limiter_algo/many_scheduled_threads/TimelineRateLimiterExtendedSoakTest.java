@@ -1,6 +1,6 @@
-package com.giuseppetavella.rate_limiter_algo.most_relevant;
+package com.giuseppetavella.rate_limiter_algo.many_scheduled_threads;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +37,7 @@ public class TimelineRateLimiterExtendedSoakTest {
         long durationSec = durationMinutes * 60L;
         int throughputBuckets = (int) (durationSec / throughputBucketSec);
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(nTimelines).build();
         limiter.start();
 

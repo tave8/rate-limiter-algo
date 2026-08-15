@@ -1,7 +1,6 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TimelineChaosAndResiliencyTest {
 
-    private TimelineRateLimiter manager;
+    private TimelineNThreadsRateLimiter manager;
     private ExecutorService executor;
     private int cores;
 
@@ -24,8 +23,7 @@ public class TimelineChaosAndResiliencyTest {
         cores = Runtime.getRuntime().availableProcessors();
         executor = Executors.newFixedThreadPool(cores);
 
-        manager = new TimelineRateLimiter.Builder(10_000, 1_000).nTimelines(6).build();
-        manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
+        manager = new TimelineNThreadsRateLimiter.Builder(10_000, 1_000).nTimelines(6).build();
         manager.start();
     }
 

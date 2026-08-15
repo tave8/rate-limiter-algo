@@ -1,7 +1,7 @@
-package com.giuseppetavella.rate_limiter_algo.most_relevant;
+package com.giuseppetavella.rate_limiter_algo.many_scheduled_threads;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.Timeline;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.timelines.AbstractTimeline;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +53,7 @@ public class TimelineRateLimiterDeepDiveTest {
 
         System.out.println("\n=== Overshoot sweep (nTimelines=1, capacity=" + capacity + ", threads=" + threads + ") ===");
         for (int trial = 1; trial <= trials; trial++) {
-            TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+            TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                     .nTimelines(1).build();
             limiter.start();
 
@@ -115,7 +115,7 @@ public class TimelineRateLimiterDeepDiveTest {
 
         System.out.println("\n=== Masking comparison ===");
         for (int nTimelines : timelineCounts) {
-            TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+            TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                     .nTimelines(nTimelines).build();
             limiter.start();
 
@@ -165,18 +165,18 @@ public class TimelineRateLimiterDeepDiveTest {
         int threads = 32;
         int nTimelines = 3; // need >1 timeline for rollback path (decreaseEventCountUntil) to trigger
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(nTimelines).build();
         limiter.start();
 
-        List<Timeline> timelines = limiter.getTimelines();
+        List<AbstractTimeline> timelines = limiter.getTimelines();
         AtomicLong violations = new AtomicLong(0);
         AtomicLong maxObservedOverage = new AtomicLong(0);
         StopFlag stop = new StopFlag();
 
         Thread watcher = new Thread(() -> {
             while (!stop.stopped) {
-                for (Timeline t : timelines) {
+                for (AbstractTimeline t : timelines) {
                     long count = t.getCountInWindow();
                     if (count > capacity) {
                         violations.incrementAndGet();
@@ -234,7 +234,7 @@ public class TimelineRateLimiterDeepDiveTest {
         int threads = 32;
         int attemptsPerThread = 5_000;
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(1).build();
         limiter.start();
 
@@ -284,7 +284,7 @@ public class TimelineRateLimiterDeepDiveTest {
         long pollIntervalMs = 5;
         long timeoutMs = windowMs * 2;
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs)
                 .nTimelines(nTimelines).build();
 
         long t0 = System.currentTimeMillis();
@@ -295,7 +295,7 @@ public class TimelineRateLimiterDeepDiveTest {
             limiter.add();
         }
 
-        List<Timeline> timelines = limiter.getTimelines();
+        List<AbstractTimeline> timelines = limiter.getTimelines();
         long[] observedResetMs = new long[nTimelines];
         boolean[] resetSeen = new boolean[nTimelines];
 
@@ -339,7 +339,7 @@ public class TimelineRateLimiterDeepDiveTest {
     @Test
     @DisplayName("Lifecycle: calling start() twice throws IllegalStateException")
     void testDoubleStartThrows() {
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(1_000, 1_000)
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(1_000, 1_000)
                 .nTimelines(1).build();
         limiter.start();
         try {
@@ -369,9 +369,9 @@ public class TimelineRateLimiterDeepDiveTest {
         Thread.sleep(200);
         int threadsBefore = threadBean.getThreadCount();
 
-        List<TimelineRateLimiter> keepAlive = new ArrayList<>(); // prevent GC from collecting instances
+        List<TimelineNThreadsRateLimiter> keepAlive = new ArrayList<>(); // prevent GC from collecting instances
         for (int i = 0; i < instancesToCreate; i++) {
-            TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(1_000, 5_000)
+            TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(1_000, 5_000)
                     .nTimelines(nTimelines).build();
             limiter.start();
             keepAlive.add(limiter);

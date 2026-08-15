@@ -1,7 +1,9 @@
-package com.giuseppetavella.rate_limiter_algo.timeline;
+package com.giuseppetavella.rate_limiter_algo.timeline.timelines;
 
 import com.giuseppetavella.rate_limiter_algo.Clock;
 import com.giuseppetavella.rate_limiter_algo.RejectionReason;
+import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.AbstractTimelineRateLimiter;
 
 /**
  * A Reactive Quiet Timeline provides maximum accuracy
@@ -9,9 +11,9 @@ import com.giuseppetavella.rate_limiter_algo.RejectionReason;
  * 
  * 
  */
-public class ReactiveQuietTimeline extends Timeline {
+public class Timeline extends AbstractTimeline {
 
-    public ReactiveQuietTimeline(Builder builder) 
+    public Timeline(Builder builder) 
     {
         super(
                 builder.maxEvents,
@@ -104,27 +106,17 @@ public class ReactiveQuietTimeline extends Timeline {
             this.id = id;
         }
 
-        public static ReactiveQuietTimeline newFromManager(TimelineRateLimiter manager) {
-            var builder = new ReactiveQuietTimeline.Builder(
+        public static Timeline newFromManager(AbstractTimelineRateLimiter manager) {
+            var builder = new Timeline.Builder(
                     manager.getMaxEvents(),
                     manager.getWindow(),
                     manager.nextTimelineSeq()
             );
             builder.clock(manager.getClock());
             builder.eventFilterer(manager.getEventFilterer());
-            return new ReactiveQuietTimeline(builder);
+            return new Timeline(builder);
         }
-
-        public static ReactiveQuietTimeline newFromManager(TimelineEfficientRateLimiter manager) {
-            var builder = new ReactiveQuietTimeline.Builder(
-                    manager.getMaxEvents(),
-                    manager.getWindow(),
-                    manager.nextTimelineSeq()
-            );
-            builder.clock(manager.getClock());
-            builder.eventFilterer(manager.getEventFilterer());
-            return new ReactiveQuietTimeline(builder);
-        }
+        
         
         public Builder clock(Clock clock) {
             this.clock = clock;
@@ -136,8 +128,8 @@ public class ReactiveQuietTimeline extends Timeline {
             return this;
         }
 
-        public ReactiveQuietTimeline build() {
-            return new ReactiveQuietTimeline(this);
+        public Timeline build() {
+            return new Timeline(this);
         }
     }
 

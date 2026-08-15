@@ -1,7 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
 import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 class TimelineAbstractRateLimiterTest {
     @Test
     void test0() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(1000, 1000).nTimelines(5)
+        var manager = new TimelineNThreadsRateLimiter.Builder(1000, 1000).nTimelines(5)
                 .verbose(true)
                 .build();
         
@@ -41,7 +41,7 @@ class TimelineAbstractRateLimiterTest {
     
     @Test
     void test1() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
         
         // timeline manager - get max peak for each instance. at add operation.
@@ -67,7 +67,7 @@ class TimelineAbstractRateLimiterTest {
 
     @Test
     void test2() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 100;
@@ -91,7 +91,7 @@ class TimelineAbstractRateLimiterTest {
 
     @Test
     void test3() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 10;
@@ -114,7 +114,7 @@ class TimelineAbstractRateLimiterTest {
 
     @Test
     void test4() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 100;
@@ -141,7 +141,7 @@ class TimelineAbstractRateLimiterTest {
 
     @Test
     void test5() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
         var concurrentModifier = new ConcurrentModifier();
 
         int nThreads = 1000;
@@ -173,7 +173,7 @@ class TimelineAbstractRateLimiterTest {
 
     @Test
     void test6() throws InterruptedException {
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(5).build();
 
         var concurrentModifier = new ConcurrentModifier();
 
@@ -210,7 +210,7 @@ class TimelineAbstractRateLimiterTest {
                 // return t.isBeforeEventThreshold(.97); // If < 97% of window, can add. Else reject.
         }; 
         
-        var manager = new TimelineRateLimiter.Builder(100_000, 1000).nTimelines(3) 
+        var manager = new TimelineNThreadsRateLimiter.Builder(100_000, 1000).nTimelines(3) 
             .eventFilterer(fil)
             .clock(clock)
             .verbose(true)
@@ -252,7 +252,7 @@ class TimelineAbstractRateLimiterTest {
         var maxEvents = 100;
         var window = 1000;
         var nTimelines = 3;
-        var manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).build();
         
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -304,7 +304,7 @@ class TimelineAbstractRateLimiterTest {
             return t.isBeforeEventThreshold(.97);
         };
         
-        var manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).eventFilterer(fil).verbose(true).build();
+        var manager = new TimelineNThreadsRateLimiter.Builder(maxEvents, window).nTimelines(nTimelines).eventFilterer(fil).verbose(true).build();
 
         var concurrentModifier = new ConcurrentModifier();
         var scheduler = Executors.newSingleThreadScheduledExecutor();

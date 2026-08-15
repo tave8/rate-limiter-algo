@@ -2,17 +2,33 @@
 
 This is the Rate Limiter Algorithm, which is part of my [Rate Limiter Project](https://github.com/tave8/rate-limiter). 
 
-This library started from a personal problem; An Email Sending API would allow max 5 emails sent per second. This solution is thought to be used for ***client-side rate limiting***. It's when you use a third-party service and know their request limit and you should limit the requests yourself before you hit that 429 HTTP status code.
+Problem: You cannot send more than N requests in T time window to a third-party service. How do you rate limit the requests without coupling business logic with rate limiting logic? And when you build such a rate limiter, you don't want to just build it for one service, you want to make it reusable, so how do you make it a reusable, easy to plug in and out, non-intrusive component?
 
-<p align="center">
-  <img src="./media/overview.png" alt="Overview" width="50%">
-</p>
+How do you avoid coupling timing or scheduling logic from what to do? And how do you avoid storing event timestamps so that space complexity does not grow linearly with events and don't run out of memory predictably?
 
-Here's how easy it is to create a rate limiter and apply the rate limiting logic.
+It started from a personal problem. An Email Sending API would allow max 5 emails sent per second. This solution is thought to be used for ***client-side rate limiting***. It's when you use a third-party service and know their request limit and you should limit the requests yourself before you hit that 429 HTTP status code.
 
-<p align="center">
-  <img src="./media/usage.png" alt="Usage" width="80%">
-</p>
+2 lines to install it, a few more to use it. Here's how easy it is to create a rate limiter and apply the rate limiting logic.
+
+```java
+// Goal: rate limit max 100 events per second.
+
+// Define params 
+int maxEvents = 100; 
+long windowMs = 1_000;
+
+// Create default rate limiter (easiest)
+RateLimiter limiter = RateLimiters.newDefault(maxEvents, windowMs);
+
+// Apply rate limit = try adding new event
+if( !limiter.add() ) {
+  // Outside limit = event rejected
+  RejectionReason reason = limiter.getRejectionReason(); 
+} else {
+    // Inside limit = continue
+    doOperation();      
+}
+```
 
 Scenarios:
 - You have 1 web server. You can rate limit directly in-memory, in your web server. The client *is* your web server.
@@ -27,6 +43,11 @@ What it offers:
 The goal is to provide you with a Rate Limiter algorithm that is efficient, easy to use and that you can start using right now in your project.
 
 It does not require Spring, however if you use Spring it'll be even easier because this library leverages the convention of using a singleton for each service (a bean) which maps perfectly to how the library is thought to be used: ***1 service instance : 1 rate limiter instance***. 
+
+
+<p align="center">
+  <img src="./media/overview.png" alt="Overview" width="50%">
+</p>
 
 
 ## The problem
@@ -301,6 +322,17 @@ Either you wait real time just so time can move forward, or you make that time m
 It's on this intuition that a solution was created to simulate waiting without actually waiting.
 
 Each history queue has its own concept of time and can be easily modified.
+
+
+### Communicating rejection
+
+The first implementation of the Timeline would throw exceptions as a mechanism for communicating event rejection. The realization came that throwing exceptions causes the thread to somehow be interrupted as well as the bubbling up of the exception and the stack trace it would bring with it.
+
+So the new Timeline implementation would have to communicate event rejection in another way, possibly directly in the `add()` method. But how? A simple idea was to use the return of `add()` to return a boolean indicating event added or rejected. But a boolean was not enough, I needed more than a binary communication. So I devised an enum which is the RejectionReason, which communicates exactly that. 
+
+This allowed the new Timeline implementation to be faster - I don't remember exact percentages but it was clear as daylight the massive improvement.
+
+
 
 
 ### Decoupling timelines from threads

@@ -1,8 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo;
 
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineEfficientRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
-import com.giuseppetavella.rate_limiter_algo.timeline.Timelines;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineRateLimiter;
 import org.junit.jupiter.api.Test;
 
 public class DemoTest {
@@ -10,14 +9,14 @@ public class DemoTest {
     void test1() throws InterruptedException {
         int maxEvents = 100;
         long window = 1000;
-        
-        
-        TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(1)
-                .build();
-
-        manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
-
-        manager.start();
+        //
+        //
+        // TimelineRateLimiter manager = new TimelineRateLimiter.Builder(maxEvents, window).nTimelines(1)
+        //         .build();
+        //
+        // manager.setTimelineSupplier(() -> Timelines.newReactiveQuietBackoffFrom(manager));
+        //
+        // manager.start();
         
         // RateLimiter rateLimiter2 = new HistoryQueue(maxEvents, window, clock2);
         
@@ -42,7 +41,7 @@ public class DemoTest {
         int capacity = 1_000;
         long windowMs = 100;
 
-        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
+        TimelineNThreadsRateLimiter limiter = new TimelineNThreadsRateLimiter.Builder(capacity, windowMs).nTimelines(1).build();
         limiter.start();
         // Thread.sleep(1000);
 
@@ -91,7 +90,7 @@ public class DemoTest {
         int maxEvents = 100;
         long windowMs = 1_000;
 
-        TimelineEfficientRateLimiter limiter = new TimelineEfficientRateLimiter.Builder(maxEvents, windowMs)
+        TimelineRateLimiter limiter = new TimelineRateLimiter.Builder(maxEvents, windowMs)
                 .nTimelines(3)
                 .build();
 
@@ -115,5 +114,27 @@ public class DemoTest {
         
     }
 
+
+
+    @Test
+    void test5() throws InterruptedException {
+
+        // Define params
+        int maxEvents = 100;
+        long windowMs = 1_000;
+
+        // Create default rate limiter (easiest)
+        RateLimiter limiter = RateLimiters.newDefault(maxEvents, windowMs);
+        
+        // Apply rate limit (try adding new event)
+        if( !limiter.add() ) {
+            // Do something on event rejected
+            RejectionReason rejection = limiter.getRejectionReason(); 
+            return;
+        }
+
+        
+        return;
+    }
 
 }

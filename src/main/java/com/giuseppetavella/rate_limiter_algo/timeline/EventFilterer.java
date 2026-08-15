@@ -1,5 +1,7 @@
 package com.giuseppetavella.rate_limiter_algo.timeline;
 
+import com.giuseppetavella.rate_limiter_algo.timeline.timelines.AbstractTimeline;
+
 /**
  * An Event Filterer is a function that gets called before adding a new event, 
  * and allows injecting custom filtering logic. 
@@ -93,5 +95,5 @@ public interface EventFilterer {
      * @return true if the new event can be added, 
      *          false if the new event cannot be added
      */
-    boolean filter(Timeline t);
+    boolean filter(AbstractTimeline t);
 }

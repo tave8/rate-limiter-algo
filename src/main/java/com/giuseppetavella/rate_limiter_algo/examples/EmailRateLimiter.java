@@ -4,7 +4,7 @@ import com.giuseppetavella.rate_limiter_algo.RateLimiter;
 import com.giuseppetavella.rate_limiter_algo.RejectionReason;
 import com.giuseppetavella.rate_limiter_algo.timeline.EventFilterer;
 import com.giuseppetavella.rate_limiter_algo.timeline.RateLimiterSpeed;
-import com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter;
+import com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineRateLimiter;
 
 /**
  * Example usage. Your service (an Email API)

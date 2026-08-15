@@ -6,7 +6,7 @@ picking up this project has the full context of **what was tested, what the numb
 were, and — importantly — which numbers are trustworthy and which are measurement
 artifacts.**
 
-- **Subject under test:** `com.giuseppetavella.rate_limiter_algo.timeline.TimelineRateLimiter`
+- **Subject under test:** `com.giuseppetavella.rate_limiter_algo.timeline.rate_limiters.TimelineNThreadsRateLimiter`
   (staggered multi-timeline / sliding-window approximation).
 - **Test location:** `src/test/.../timeline/ai_battle_tests/`
 - **Run date:** 2026-08-12
