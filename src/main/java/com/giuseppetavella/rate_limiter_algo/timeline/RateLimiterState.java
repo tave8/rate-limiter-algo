@@ -4,5 +4,6 @@ public enum RateLimiterState {
     NEW,
     STARTING,
     RUNNING,
+    STOPPING,
     STOPPED
 }

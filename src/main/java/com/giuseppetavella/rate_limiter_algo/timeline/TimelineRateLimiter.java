@@ -79,49 +79,72 @@ public class TimelineRateLimiter extends AbstractRateLimiter {
      * Start the timelines.
      */
     public void start() {
-        if(getState().equals(RateLimiterState.RUNNING)) {
-            throw new IllegalStateException("cannot start rate limiter because it's already running.");
-        }
-        
-        setState(RateLimiterState.STARTING);
-        
-        if(timelines == null) {
-            throw new IllegalStateException("before starting timelines, "
-                                    +"timelines list must be initialized. got null.");
-        }
-        
-        if(timelineSupplier == null) {
-            throw new IllegalStateException("timelineSupplier cannot be null. "
-                    +"before starting the timelines, a timeline supplier must be provided.");
-        }
-        
-        // Add timelines with given supplier
-        for (int i = 0; i < nTimelines; i++) {
-            timelines.add( timelineSupplier.get() );
-        }
+        synchronized (this) {
+            if(getState().equals(RateLimiterState.RUNNING)) {
+                throw new IllegalStateException("cannot start rate limiter because it's already running.");
+            }
 
-        // Schedule threads to run predefined timelines.
-        // Essentially, a thread is assigned a timeline,
-        // and a timeline is assigned a thread. Not enforced 
-        // and should be decoupled but ok for now.
-        for (int i = 0; i < nTimelines; i++) {
-            Timeline t = timelines.get(i);
-            
-            var scheduler = Executors.newSingleThreadScheduledExecutor();
-            
-            scheduler.scheduleAtFixedRate(
-                    buildScheduledTask(t),
-                    calcInitialDelay(i),
-                    window,
-                    TimeUnit.MILLISECONDS
-            );
-            
-            schedulers.add(scheduler);
+            if(getState().equals(RateLimiterState.STOPPED)) {
+                throw new IllegalStateException("cannot start rate limiter because it has already been "
+                        +"stopped. a rate limiter instance cannot be restarted "
+                        +"once stopped - create a new instance instead.");
+            }
+
+            setState(RateLimiterState.STARTING);
+
+            if(timelines == null) {
+                throw new IllegalStateException("before starting timelines, "
+                        +"timelines list must be initialized. got null.");
+            }
+
+            if(timelineSupplier == null) {
+                throw new IllegalStateException("timelineSupplier cannot be null. "
+                        +"before starting the timelines, a timeline supplier must be provided.");
+            }
+
+            // Add timelines with given supplier
+            for (int i = 0; i < nTimelines; i++) {
+                timelines.add( timelineSupplier.get() );
+            }
+
+            // Schedule threads to run predefined timelines.
+            for (int i = 0; i < nTimelines; i++) {
+                Timeline t = timelines.get(i);
+
+                var scheduler = Executors.newSingleThreadScheduledExecutor();
+
+                scheduler.scheduleAtFixedRate(
+                        buildScheduledTask(t),
+                        calcInitialDelay(i),
+                        window,
+                        TimeUnit.MILLISECONDS
+                );
+
+                schedulers.add(scheduler);
+            }
+
+            setState(RateLimiterState.RUNNING);
         }
+    }
 
+    public void stop() {
+        synchronized (this) {
+            if(getState().equals(RateLimiterState.STOPPED)) {
+                throw new IllegalStateException("rate limiter is already stopped, cannot stop it again.");
+            }
 
-        setState(RateLimiterState.RUNNING);
+            if(getState().equals(RateLimiterState.NEW)) {
+                throw new IllegalStateException("rate limiter was never started, so cannot stop it.");
+            }
 
+            setState(RateLimiterState.STOPPING);
+
+            schedulers.forEach(scheduler -> {
+                scheduler.shutdown();
+            });
+
+            setState(RateLimiterState.STOPPED);
+        }
     }
 
 
